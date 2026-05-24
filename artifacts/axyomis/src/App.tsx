@@ -9,14 +9,19 @@ import { Chatbot } from './components/Chatbot';
 import { QuizSection } from './components/QuizSection';
 import { GlobalPopups } from './components/Popups';
 import { Profile } from './components/Profile';
+import { PremiumSection } from './components/PremiumSection';
+import { AITutor } from './components/AITutor';
+import { StudyPlan } from './components/StudyPlan';
+import { OnboardingFlow } from './components/OnboardingFlow';
 import { auth, getUserProfile } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { User as LucideUser, Volume2, Shield, Radio, Activity, Terminal } from 'lucide-react';
+import { User as LucideUser, Volume2, Shield, Radio, Activity, Terminal, Brain, Crown, GraduationCap } from 'lucide-react';
 import { MarqueeBanner } from './components/MarqueeBanner';
 import { Globe } from './components/Globe';
 import { ScrollExpansionHero } from './components/ScrollExpansionHero';
 import { OriginDialog } from './components/OriginDialog';
 import { voiceService } from './services/voice';
+import { useUser } from './context/UserContext';
 
 export default function App() {
   const engineRef = useRef<AxyomisEngine | null>(null);
@@ -24,7 +29,10 @@ export default function App() {
   const [talkModeEnabled, setTalkModeEnabled] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMatrixOpen, setIsMatrixOpen] = useState(false);
+  const [isAITutorOpen, setIsAITutorOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const { hasCompletedOnboarding, isPremium, premiumTier, classLevel, subjects, uid } = useUser();
 
   useEffect(() => {
     try {
@@ -47,6 +55,13 @@ export default function App() {
 
     return () => unsubscribe();
   }, []);
+
+  // Trigger onboarding after login if not completed
+  useEffect(() => {
+    if (!uid || hasCompletedOnboarding) return;
+    const timer = setTimeout(() => setIsOnboardingOpen(true), 1500);
+    return () => clearTimeout(timer);
+  }, [uid, hasCompletedOnboarding]);
 
   const handleChatStateChange = useCallback((open: boolean) => {
     setIsChatOpen(open);
@@ -120,8 +135,16 @@ export default function App() {
           <a href="#evaluation-quiz">QUIZ</a>
           <a href="#cosmos-section">Cosmos</a>
           <a href="#anatomy-section">Anatomy</a>
-          <a href="#hospital-section">Clinical</a>
-          <a href="#study-hub">High School</a>
+          <a href="#study-hub">Sciences</a>
+          <a href="#premium-section">Premium</a>
+          <button
+            onClick={() => setIsAITutorOpen(true)}
+            className="px-4 py-2 bg-cyan-600/10 border border-cyan-500/30 rounded-full text-[10px] font-bold text-cyan-400 uppercase tracking-widest hover:bg-cyan-600/20 transition-all flex items-center gap-2"
+          >
+            <Brain className="w-3 h-3" />
+            AI Tutor
+            {isPremium && <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />}
+          </button>
           <button 
             onClick={() => {
               setIsMatrixOpen(true);
@@ -130,7 +153,7 @@ export default function App() {
             className="px-4 py-2 bg-blue-600/10 border border-blue-500/20 rounded-full text-[10px] font-bold text-blue-400 uppercase tracking-widest hover:bg-blue-600/20 transition-all flex items-center gap-2"
           >
             <Volume2 className="w-3 h-3" />
-            Explore Info
+            Info
           </button>
           <button 
             onClick={() => setIsProfileOpen(true)}
@@ -407,6 +430,65 @@ export default function App() {
           </button>
         </section>
 
+        {/* STUDY PLAN SECTION */}
+        <StudyPlan />
+
+        {/* AI TUTOR PROMO BANNER */}
+        <section className="max-w-7xl mx-auto px-8 mb-24">
+          <div className="relative rounded-3xl overflow-hidden border border-cyan-500/20 bg-gradient-to-r from-cyan-950/60 via-[#070810] to-blue-950/60 p-10 sm:p-14">
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute left-0 top-0 w-80 h-80 bg-cyan-500/10 blur-[100px] rounded-full -translate-x-1/2 -translate-y-1/2" />
+              <div className="absolute right-0 bottom-0 w-80 h-80 bg-blue-500/10 blur-[100px] rounded-full translate-x-1/2 translate-y-1/2" />
+            </div>
+            <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-8">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Brain className="w-5 h-5 text-cyan-400" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">AI Tutor — Powered by Gemini</span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter text-white mb-2">
+                  Your Personal AI Teacher
+                </h3>
+                <p className="text-slate-400 text-sm max-w-md">
+                  Get chapter-by-chapter lessons, video compilations, AI summaries and live quizzes — all adapted to your class level and subjects.
+                  {classLevel && <span className="text-cyan-400 ml-1 font-bold">Tuned for {classLevel}.</span>}
+                </p>
+                {subjects.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {subjects.map(s => (
+                      <span key={s} className="px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[9px] font-black uppercase tracking-widest text-cyan-400">{s}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">
+                {!uid && (
+                  <button
+                    onClick={() => setIsProfileOpen(true)}
+                    className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/10 transition-all flex items-center gap-2"
+                  >
+                    <GraduationCap className="w-4 h-4" /> Sign In First
+                  </button>
+                )}
+                {uid && !hasCompletedOnboarding && (
+                  <button
+                    onClick={() => setIsOnboardingOpen(true)}
+                    className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/10 transition-all flex items-center gap-2"
+                  >
+                    <GraduationCap className="w-4 h-4" /> Set Your Class
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsAITutorOpen(true)}
+                  className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl text-black font-black uppercase tracking-widest text-[10px] hover:from-cyan-400 hover:to-blue-400 shadow-xl shadow-cyan-500/20 transition-all flex items-center gap-2"
+                >
+                  <Brain className="w-4 h-4" /> Open AI Tutor
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ASTRA LABS SECTION */}
         <section id="astra-labs" className="max-w-7xl mx-auto px-8 mb-32">
           <div className="mb-16">
@@ -486,6 +568,9 @@ export default function App() {
         </section>
 
       </main>
+
+      {/* PREMIUM SECTION */}
+      <PremiumSection />
 
       {/* READER MODAL */}
       <div id="reader-modal">
@@ -619,6 +704,8 @@ export default function App() {
         startInConversationMode={talkModeEnabled}
       />
       <Profile isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
+      <AITutor isOpen={isAITutorOpen} onClose={() => setIsAITutorOpen(false)} />
+      <OnboardingFlow isOpen={isOnboardingOpen} onClose={() => setIsOnboardingOpen(false)} />
       <OriginDialog 
         isOpen={isMatrixOpen} 
         onClose={() => setIsMatrixOpen(false)} 
