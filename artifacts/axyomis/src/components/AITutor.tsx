@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, BookOpen, Video, Brain, ClipboardList, ChevronRight, Loader2, Sparkles, Play, ExternalLink, CheckCircle2, XCircle, RefreshCw, Crown, Lock, GraduationCap, ChevronDown, MessageSquare } from 'lucide-react';
+import { X, BookOpen, Video, Brain, ClipboardList, ChevronRight, ChevronLeft, Loader2, Sparkles, Play, CheckCircle2, XCircle, RefreshCw, Crown, Lock, GraduationCap, ChevronDown } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import { useUser } from '../context/UserContext';
 import { logActivity } from '../services/activityService';
@@ -364,7 +364,7 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose }) => {
 
                         {activeTab === 'videos' && (
                           <motion.div key="videos" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                            <VideoPanel videos={videos} />
+                            <VideoPanel videos={videos} subject={selectedSubject} chapter={selectedChapter} />
                           </motion.div>
                         )}
 
@@ -379,7 +379,11 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose }) => {
                                 submitted={quizSubmitted}
                                 score={score}
                                 onAnswer={handleAnswer}
-                                onSubmit={() => setQuizSubmitted(true)}
+                                onSubmit={() => {
+                                  const finalScore = userAnswers.filter((a, i) => a === quizQuestions[i]?.correctIndex).length;
+                                  setQuizSubmitted(true);
+                                  if (uid) logActivity(uid, { type: 'quiz', subject: selectedSubject, topic: selectedChapter, score: finalScore, maxScore: quizQuestions.length });
+                                }}
                                 onRetry={() => { setQuizQuestions([]); setUserAnswers([]); setQuizSubmitted(false); loadTab('quiz'); }}
                               />
                             ) : null}
@@ -413,43 +417,132 @@ function PremiumGate({ feature }: { feature: string }) {
   );
 }
 
-function VideoPanel({ videos }: { videos: VideoGroup | null }) {
+function VideoPanel({ videos, subject, chapter }: { videos: VideoGroup | null; subject: string; chapter: string }) {
   const [lang, setLang] = useState<'english' | 'hindi' | 'nepali'>('english');
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [watched, setWatched] = useState<Set<number>>(new Set());
   const list = videos ? videos[lang] : [];
+  const active = list[activeIdx] || null;
+
+  useEffect(() => { setActiveIdx(0); setWatched(new Set()); }, [lang]);
+
+  const goTo = (idx: number) => {
+    setWatched(prev => new Set([...prev, activeIdx]));
+    setActiveIdx(idx);
+  };
+  const goNext = () => { if (activeIdx < list.length - 1) goTo(activeIdx + 1); };
+  const goPrev = () => { if (activeIdx > 0) goTo(activeIdx - 1); };
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2 mb-4">
+      {/* Language tabs */}
+      <div className="flex gap-2">
         {(['english', 'hindi', 'nepali'] as const).map(l => (
           <button key={l} onClick={() => setLang(l)}
-            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${lang === l ? 'bg-cyan-500/10 border border-cyan-500/30 text-cyan-400' : 'bg-white/5 border border-white/10 text-slate-500 hover:text-white'}`}>
-            {l === 'english' ? '🇬🇧 English' : l === 'hindi' ? '🇮🇳 Hindi' : '🇳🇵 Nepali'}
+            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${lang === l ? 'bg-cyan-500/10 border border-cyan-500/30 text-cyan-400' : 'bg-white/5 border border-white/10 text-slate-500 hover:text-white'}`}>
+            {l === 'english' ? '🇬🇧 EN' : l === 'hindi' ? '🇮🇳 HI' : '🇳🇵 NE'}
           </button>
         ))}
       </div>
-      {!videos && <p className="text-slate-500 text-sm">Loading videos...</p>}
-      {list.length === 0 && videos && <p className="text-slate-500 text-sm">No videos found for this language.</p>}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {list.map(v => (
-          <a key={v.id} href={`https://www.youtube.com/watch?v=${v.id}`} target="_blank" rel="noreferrer"
-            className="group flex gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors">
-            <div className="relative flex-shrink-0 w-28 h-18 rounded-xl overflow-hidden">
-              <img src={v.thumbnail} alt={v.title} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Play className="w-6 h-6 text-white" />
+
+      {!videos && (
+        <div className="flex items-center justify-center h-48">
+          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+        </div>
+      )}
+
+      {videos && list.length === 0 && (
+        <div className="text-center py-12 text-slate-500">
+          <Video className="w-8 h-8 mx-auto mb-2 opacity-30" />
+          <p className="text-[10px] uppercase tracking-widest font-bold">No videos available for this language</p>
+        </div>
+      )}
+
+      {active && (
+        <>
+          {/* In-app video player */}
+          <div className="rounded-2xl overflow-hidden bg-black border border-white/10">
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <iframe
+                key={active.id}
+                src={`https://www.youtube.com/embed/${active.id}?autoplay=1&rel=0&modestbranding=1&showinfo=0`}
+                title={active.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full border-0"
+              />
+            </div>
+            {/* Player controls bar */}
+            <div className="px-4 py-3 bg-white/[0.02] border-t border-white/5 flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full">
+                    Part {activeIdx + 1} of {list.length}
+                  </span>
+                  {watched.has(activeIdx) && (
+                    <span className="text-[9px] font-black uppercase tracking-widest text-green-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-2.5 h-2.5" /> Watched
+                    </span>
+                  )}
+                </div>
+                <p className="text-[12px] font-bold text-white truncate">{active.title}</p>
+                <p className="text-[10px] text-slate-500 truncate">{active.channelTitle}</p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button onClick={goPrev} disabled={activeIdx === 0}
+                  className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button onClick={goNext} disabled={activeIdx >= list.length - 1}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-500 text-black font-black uppercase tracking-widest text-[10px] hover:bg-cyan-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                  Next <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-bold text-white leading-tight line-clamp-2 mb-1">{v.title}</p>
-              <p className="text-[10px] text-slate-500 truncate">{v.channelTitle}</p>
-              <div className="flex items-center gap-1 mt-2">
-                <ExternalLink className="w-2.5 h-2.5 text-cyan-500" />
-                <span className="text-[9px] text-cyan-500 font-bold uppercase tracking-widest">Watch</span>
-              </div>
+          </div>
+
+          {/* Playlist */}
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2 px-1">
+              {chapter} · {list.length} Part Series
+            </p>
+            <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+              {list.map((v, i) => {
+                const isActive = i === activeIdx;
+                const isDone = watched.has(i);
+                return (
+                  <button key={v.id} onClick={() => goTo(i)}
+                    className={`w-full flex items-center gap-3 p-2.5 rounded-xl border transition-all text-left ${isActive ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-white/[0.02] border-white/5 hover:border-white/10 hover:bg-white/5'}`}>
+                    {/* Part indicator */}
+                    <div className={`w-6 h-6 rounded-full border flex items-center justify-center flex-shrink-0 text-[9px] font-black transition-all ${isDone ? 'border-green-500/40 bg-green-500/10 text-green-400' : isActive ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-400' : 'border-white/10 text-slate-500'}`}>
+                      {isDone ? '✓' : i + 1}
+                    </div>
+                    {/* Thumbnail */}
+                    <div className="relative w-20 flex-shrink-0 rounded-lg overflow-hidden aspect-video bg-black">
+                      <img src={v.thumbnail} alt={v.title} className="w-full h-full object-cover opacity-90" />
+                      {isActive && (
+                        <div className="absolute inset-0 bg-cyan-500/30 flex items-center justify-center">
+                          <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
+                        </div>
+                      )}
+                      {!isActive && !isDone && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                          <Play className="w-4 h-4 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[8px] font-black uppercase tracking-widest text-slate-500 mb-0.5">Part {i + 1}</div>
+                      <p className={`text-[11px] font-bold leading-tight line-clamp-2 ${isActive ? 'text-cyan-400' : 'text-white'}`}>{v.title}</p>
+                      <p className="text-[10px] text-slate-600 truncate mt-0.5">{v.channelTitle}</p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          </a>
-        ))}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

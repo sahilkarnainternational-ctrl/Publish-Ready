@@ -20,13 +20,14 @@ router.post("/youtube-multilingual", async (req, res) => {
         {
           params: {
             part: "snippet",
-            maxResults: 6,
-            q: `${topic}${levelStr} ${langQuery}`,
+            maxResults: 8,
+            q: `${topic}${levelStr} ${langQuery} full lecture explained tutorial`,
             type: "video",
             key: apiKey,
             videoEmbeddable: "true",
             safeSearch: "strict",
             order: "relevance",
+            videoDuration: "medium",
           },
         },
       );

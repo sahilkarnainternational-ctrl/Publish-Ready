@@ -1,17 +1,53 @@
 {
   "name": "Axyomis-X",
-  "short_name": "AxyomisX",
-  "description": "Premium Science & Medical Learning Platform",
+  "short_name": "Axyomis-X",
+  "description": "Advanced AI-powered science & biomedical learning platform with 30-day free trial. Learn Biology, Chemistry, Physics, Astronomy and more.",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#08080a",
-  "theme_color": "#E5D3B3",
+  "orientation": "portrait-primary",
+  "background_color": "#08090e",
+  "theme_color": "#0891b2",
+  "lang": "en",
+  "categories": ["education", "science", "productivity"],
+  "screenshots": [],
   "icons": [
+    {
+      "src": "https://img.icons8.com/isometric/192/medical-doctor.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "https://img.icons8.com/isometric/512/medical-doctor.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "AI Tutor",
+      "short_name": "Tutor",
+      "description": "Open the AI chapter tutor",
+      "url": "./#ai-tutor",
+      "icons": [{ "src": "https://img.icons8.com/isometric/96/graduation-cap.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Lyra Chat",
+      "short_name": "Lyra",
+      "description": "Chat with Lyra AI",
+      "url": "./#chat",
+      "icons": [{ "src": "https://img.icons8.com/isometric/96/robot.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Quizzes",
+      "short_name": "Quiz",
+      "description": "Start a quiz",
+      "url": "./#quiz-section",
+      "icons": [{ "src": "https://img.icons8.com/isometric/96/quiz.png", "sizes": "96x96" }]
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": []
 }

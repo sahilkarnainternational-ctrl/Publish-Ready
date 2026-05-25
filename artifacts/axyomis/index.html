@@ -3,26 +3,60 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Axyomis-X - Advanced Intelligence & Premium Science Learning</title>
-    <meta name="description" content="Axyomis-X - The ultimate learning hub powered by Lyra AI. Advanced Intelligence & Premium Science Learning Platform.">
-    <meta name="theme-color" content="#E5D3B3">
-    
-    <!-- Open Graph / Facebook -->
+    <title>Axyomis-X — AI Science Learning Platform</title>
+    <meta name="description" content="Axyomis-X — AI-powered biomedical OS. Learn Biology, Chemistry, Physics & more with Lyra AI, 3D visualization, quizzes, and a 30-day free trial of full Elite access.">
+    <meta name="keywords" content="science learning, AI tutor, biology, chemistry, physics, anatomy, Gemini AI, quiz, education, students">
+    <meta name="author" content="Axyomis-X">
+    <meta name="robots" content="index, follow">
+
+    <!-- Theme -->
+    <meta name="theme-color" content="#0891b2">
+    <meta name="color-scheme" content="dark">
+
+    <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Axyomis-X - Premium Science Learning">
-    <meta property="og:description" content="Democratizing scientific education through AI and 3D visualization.">
-    
-    <!-- PWA -->
+    <meta property="og:title" content="Axyomis-X — AI Science Learning Platform">
+    <meta property="og:description" content="30-day free trial. AI Tutor, quizzes, 3D visualization, parent reports. The ultimate science learning platform.">
+    <meta property="og:image" content="https://img.icons8.com/isometric/512/medical-doctor.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Axyomis-X — AI Science Learning">
+    <meta name="twitter:description" content="30-day free trial. The most powerful science learning platform powered by Google Gemini.">
+    <meta name="twitter:image" content="https://img.icons8.com/isometric/512/medical-doctor.png">
+
+    <!-- PWA manifest -->
     <link rel="manifest" href="./manifest.json">
+
+    <!-- Apple PWA support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Axyomis-X">
     <link rel="apple-touch-icon" href="https://img.icons8.com/isometric/512/medical-doctor.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="https://img.icons8.com/isometric/512/medical-doctor.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://img.icons8.com/isometric/512/medical-doctor.png">
+
+    <!-- Android / Chrome -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Axyomis-X">
+
+    <!-- Microsoft tiles -->
+    <meta name="msapplication-TileColor" content="#08090e">
+    <meta name="msapplication-TileImage" content="https://img.icons8.com/isometric/512/medical-doctor.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    <!-- Third Party -->
+    <!-- Spline 3D viewer -->
     <script type="module" src="https://unpkg.com/@splinetool/viewer@1.1.2/build/spline-viewer.js"></script>
+
+    <!-- MathJax -->
     <script>
       window.MathJax = {
         tex: { inlineMath: [['$', '$'],['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
@@ -37,10 +71,11 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./service-worker.js');
+          navigator.serviceWorker.register('./service-worker.js')
+            .then(reg => console.log('[SW] Registered:', reg.scope))
+            .catch(err => console.log('[SW] Registration failed:', err));
         });
       }
     </script>
   </body>
 </html>
-
