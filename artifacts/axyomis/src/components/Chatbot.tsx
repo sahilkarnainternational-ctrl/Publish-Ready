@@ -9,6 +9,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import mermaid from 'mermaid';
+import { AstraOrb, type OrbState } from './AstraOrb';
 
 // Initialize Mermaid
 mermaid.initialize({
@@ -675,6 +676,8 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
   const recognitionRef = useRef<any>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const micStreamRef = useRef<MediaStream | null>(null);
 
   const [isAstraSpeaking, setIsAstraSpeaking] = useState(false);
 
@@ -907,9 +910,24 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
 
       const source = audioContextRef.current.createBufferSource();
       source.buffer = audioBuffer;
-      source.connect(audioContextRef.current.destination);
-      
+
+      // Insert analyser for orb reactivity
+      if (!analyserRef.current) {
+        analyserRef.current = audioContextRef.current.createAnalyser();
+        analyserRef.current.fftSize = 1024;
+        analyserRef.current.smoothingTimeConstant = 0.6;
+      }
+      try {
+        source.connect(analyserRef.current);
+        analyserRef.current.connect(audioContextRef.current.destination);
+      } catch {
+        source.connect(audioContextRef.current.destination);
+      }
+
       source.onended = () => {
+        // Ignore stale onended from a source that was already superseded
+        if (audioSourceRef.current !== source) return;
+        audioSourceRef.current = null;
         setIsAstraSpeaking(false);
         if (onEnded) onEnded();
         // In conversation mode, listen again after Astra finishes speaking
@@ -1958,107 +1976,21 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                 <X className="w-6 h-6" />
               </button>
 
-              {/* Central Neural visualizer - Luxurious Blue Astra Orb */}
+              {/* Gemini-style Astra Orb */}
               <div className="relative flex items-center justify-center w-full max-w-4xl h-[500px]">
-                <div className="relative w-96 h-96 flex items-center justify-center">
-                  {/* Layered luxury background blurs */}
-                  <motion.div 
-                    animate={{ 
-                      scale: isAstraSpeaking ? [1, 1.4, 1] : isListening ? [0.95, 1.15, 0.95] : 1,
-                      opacity: isAstraSpeaking ? [0.6, 0.2, 0.6] : 0.3
-                    }}
-                    transition={{ duration: 4, repeat: Infinity }}
-                    className="absolute inset-0 bg-gradient-to-br from-blue-400/40 via-blue-600/20 to-transparent blur-[120px] rounded-full"
-                  />
-                  
-                  {/* Saturn Ring Animation */}
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                    className="absolute w-[150%] h-[45%] border-t-[2px] border-b-[2px] border-blue-400/10 rounded-[100%] shadow-[0_0_40px_rgba(59,130,246,0.1)] opacity-40 rotate-[25deg]"
-                  />
-                  <motion.div
-                    animate={{ rotate: -360 }}
-                    transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                    className="absolute w-[140%] h-[40%] border-l-[1.5px] border-r-[1.5px] border-white/10 rounded-[100%] opacity-20 -rotate-[15deg]"
-                  />
-
-                  {/* Glitter / Sparkle Particles */}
-                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    {[...Array(12)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, scale: 0 }}
-                        animate={{ 
-                          opacity: [0, 0.8, 0],
-                          scale: [0, 1, 0],
-                          x: [0, (Math.random() - 0.5) * 350],
-                          y: [0, (Math.random() - 0.5) * 350]
-                        }}
-                        transition={{ 
-                          duration: 3 + Math.random() * 3, 
-                          repeat: Infinity, 
-                          delay: Math.random() * 5 
-                        }}
-                        className="absolute left-1/2 top-1/2 w-1 h-1 bg-white rounded-full blur-[0.5px] shadow-[0_0_12px_white]"
-                      />
-                    ))}
-                  </div>
-
-                  {/* The Neural Orb Core - Lux Sky Blue/White Fade */}
-                  <div className="relative z-20 w-80 h-80 flex items-center justify-center">
-                    <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-[0_0_50px_rgba(96,165,250,0.5)]">
-                      <defs>
-                        <radialGradient id="luxOrbGrad" cx="50%" cy="50%" r="50%">
-                          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
-                          <stop offset="30%" stopColor="#93c5fd" stopOpacity="0.85" />
-                          <stop offset="70%" stopColor="#2563eb" stopOpacity="0.4" />
-                          <stop offset="100%" stopColor="#1e40af" stopOpacity="0" />
-                        </radialGradient>
-                        <filter id="ultraBlur" x="-50%" y="-50%" width="200%" height="200%">
-                          <feGaussianBlur in="SourceGraphic" stdDeviation="6" />
-                        </filter>
-                      </defs>
-                      <motion.circle 
-                        cx="100" cy="100" r="70" 
-                        fill="url(#luxOrbGrad)"
-                        filter="url(#ultraBlur)"
-                        animate={{ 
-                          scale: isAstraSpeaking ? [1, 1.2, 1] : isListening ? [1, 1.1, 1] : [1, 1.05, 1],
-                          opacity: [0.8, 1, 0.8]
-                        }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                      />
-                      {/* Internal shimmering star */}
-                      <motion.circle
-                        cx="100" cy="100" r="10"
-                        fill="white"
-                        className="blur-[2px]"
-                        animate={{ opacity: [0.4, 0.8, 0.4], scale: [1, 1.5, 1] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                      />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* Spectral Visualizer Rings - Refined for Luxury */}
-                <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1.5 h-32 items-end pb-12">
-                  {[...Array(60)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      animate={{ 
-                        height: isAstraSpeaking ? [5, 90 + Math.random() * 60, 5] : isListening ? [5, 30 + Math.random() * 20, 5] : 5,
-                        opacity: isAstraSpeaking ? [0.4, 0.8, 0.4] : 0.1
-                      }}
-                      transition={{ 
-                        duration: 0.3 + Math.random() * 0.4, 
-                        repeat: Infinity,
-                        ease: "linear"
-                      }}
-                      className={`w-[1px] rounded-full ${isAstraSpeaking ? 'bg-gradient-to-t from-blue-500 to-white' : 'bg-white/10'}`}
-                    />
-                  ))}
-                </div>
+                <AstraOrb
+                  size={420}
+                  analyserRef={analyserRef}
+                  state={
+                    (isAstraSpeaking
+                      ? 'speaking'
+                      : isAnalyzing
+                      ? 'thinking'
+                      : isListening
+                      ? 'listening'
+                      : 'idle') as OrbState
+                  }
+                />
               </div>
 
               <div className="mt-12 text-center max-w-2xl px-8">
