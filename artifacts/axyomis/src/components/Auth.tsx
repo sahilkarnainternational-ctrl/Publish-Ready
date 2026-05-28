@@ -18,6 +18,23 @@ export const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
   const [name, setName] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | 'other' | 'prefer-not-to-say'>('prefer-not-to-say');
 
+  // Map Firebase error codes to human-friendly messages
+  const getAuthError = (err: any): string => {
+    const code = err?.code || '';
+    const msg = err?.message || '';
+    if (code === 'auth/invalid-email') return 'Invalid email address. Please check and try again.';
+    if (code === 'auth/invalid-credential' || code === 'auth/wrong-password') return 'Incorrect email or password.';
+    if (code === 'auth/user-not-found') return 'No account found. Please sign up first.';
+    if (code === 'auth/email-already-in-use') return 'An account with this email already exists. Please log in.';
+    if (code === 'auth/weak-password') return 'Password must be at least 6 characters.';
+    if (code === 'auth/popup-blocked') return 'Sign-in popup blocked. Please allow popups or try again.';
+    if (code === 'auth/popup-closed-by-user') return 'Sign-in popup closed. Please try again.';
+    if (code === 'auth/network-request-failed') return 'Network error. Please check your connection and try again.';
+    if (code === 'auth/unauthorized-domain') return 'Domain not authorized. Add this site to Firebase authorized domains.';
+    if (msg?.includes('client is offline')) return 'Cannot connect to Firebase. Please check your internet connection.';
+    return msg || 'Authentication failed. Please try again.';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -27,17 +44,12 @@ export const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
         await signInWithEmail(email, password);
       } else {
         const user = await signUpWithEmail(email, password, name);
-        // We'll update the gender immediately after signup in the store
-        // (Assuming signUpWithEmail creates the doc, or we can use another method)
-        // For simplicity, let's ensure firebase.ts handles the extra data if passed
-        // I will update signUpWithEmail to accept more data
-        // Wait, for now I'll just update the doc after
         const { updateUserProfile } = await import('../services/firebase');
         await updateUserProfile(user.uid, { gender });
       }
       onSuccess?.();
     } catch (err: any) {
-      setError(err.message || 'Authentication failed');
+      setError(getAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -50,7 +62,11 @@ export const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
       await signInWithGoogle();
       onSuccess?.();
     } catch (err: any) {
-      setError(err.message || 'Google login failed');
+      const code = err?.code || '';
+      // Redirect fallback fires its own flow; no need to show error for popup-blocked
+      if (code !== 'auth/popup-blocked' && code !== 'auth/popup-closed-by-user') {
+        setError(getAuthError(err));
+      }
     } finally {
       setLoading(false);
     }

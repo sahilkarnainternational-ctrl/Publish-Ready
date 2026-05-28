@@ -3,8 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { AxyomisEngine } from './engine';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Chatbot } from './components/Chatbot';
 import { QuizSection } from './components/QuizSection';
 import { GlobalPopups } from './components/Popups';
@@ -16,18 +15,20 @@ import { StudyAnalytics } from './components/StudyAnalytics';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { ReviewSection } from './components/ReviewSection';
 import { ParentReport } from './components/ParentReport';
-import { auth, getUserProfile } from './services/firebase';
+import { auth, getUserProfile, handleGoogleRedirectResult } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { User as LucideUser, Volume2, Shield, Radio, Activity, Terminal, Brain, Crown, GraduationCap } from 'lucide-react';
 import { MarqueeBanner } from './components/MarqueeBanner';
 import { Globe } from './components/Globe';
 import { ScrollExpansionHero } from './components/ScrollExpansionHero';
 import { OriginDialog } from './components/OriginDialog';
+import { ChapterReader } from './components/ChapterReader';
+import { TopicGrid } from './components/TopicGrid';
 import { voiceService } from './services/voice';
 import { useUser } from './context/UserContext';
+import { load3D as engineLoad3D } from './engine3d';
 
 export default function App() {
-  const engineRef = useRef<AxyomisEngine | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [talkModeEnabled, setTalkModeEnabled] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -37,15 +38,29 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const { hasCompletedOnboarding, isPremium, premiumTier, classLevel, subjects, uid } = useUser();
 
+  // Reader state
+  const [readerOpen, setReaderOpen] = useState(false);
+  const [readerTopic, setReaderTopic] = useState('');
+  const [readerContext, setReaderContext] = useState('');
+
+  // Topic grid states
+  const [studySubject, setStudySubject] = useState('Physics');
+  const [kidsSubject, setKidsSubject] = useState('Nature');
+
+  // 3D viewer states
+  const [cosmosState, setCosmosState] = useState({ iframeSrc: null as string | null, desc: '', loading: false, activeId: null as string | null });
+  const [anaState, setAnaState] = useState({ iframeSrc: null as string | null, desc: '', loading: false, activeId: null as string | null });
+  const [hospState, setHospState] = useState({ iframeSrc: null as string | null, desc: '', loading: false, activeId: null as string | null });
+
   useEffect(() => {
-    try {
-      if (!engineRef.current) {
-        engineRef.current = new AxyomisEngine();
-        engineRef.current.initModules();
+    // Handle redirect result from Google sign-in (needed when popup is blocked)
+    handleGoogleRedirectResult().then(user => {
+      if (user) {
+        getUserProfile(user.uid).then(profile => {
+          setCurrentUser(profile || user);
+        });
       }
-    } catch (e) {
-      console.error("Axyomis Engine failed to initialize:", e);
-    }
+    });
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -59,6 +74,31 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  // Dismiss loading screen after initialization
+  useEffect(() => {
+    const bar = document.getElementById('loader-bar');
+    const pctEl = document.getElementById('loader-pct');
+    const loader = document.getElementById('loader');
+    if (!bar || !pctEl || !loader) return;
+
+    let pct = 0;
+    const interval = setInterval(() => {
+      pct += Math.floor(Math.random() * 15) + 5;
+      if (pct >= 100) {
+        pct = 100;
+        clearInterval(interval);
+        setTimeout(() => {
+          loader.classList.add('loader-exit');
+          setTimeout(() => { loader.style.display = 'none'; }, 1200);
+        }, 500);
+      }
+      bar.style.width = pct + '%';
+      pctEl.innerText = pct + '%';
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Trigger onboarding after login if not completed
   useEffect(() => {
     if (!uid || hasCompletedOnboarding) return;
@@ -69,6 +109,18 @@ export default function App() {
   const handleChatStateChange = useCallback((open: boolean) => {
     setIsChatOpen(open);
     if (!open) setTalkModeEnabled(false);
+  }, []);
+
+  const openReader = useCallback((topic: string, context = '') => {
+    setReaderTopic(topic);
+    setReaderContext(context);
+    setReaderOpen(true);
+  }, []);
+
+  const closeReader = useCallback(() => {
+    setReaderOpen(false);
+    setReaderTopic('');
+    setReaderContext('');
   }, []);
 
   return (
@@ -196,14 +248,14 @@ export default function App() {
                     className="flex-1 bg-transparent border-none text-white outline-none py-3 px-4 sm:p-0 text-center sm:text-left"
                     placeholder="Search scientific phenomena..." 
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') engineRef.current?.openReader((e.target as HTMLInputElement).value);
+                      if (e.key === 'Enter') openReader((e.target as HTMLInputElement).value);
                     }}
                   />
-                  <button 
+                  <button
                     className="rainbow-btn w-full sm:w-auto mt-2 sm:mt-0"
                     onClick={() => {
                       const input = document.getElementById('hero-search-input') as HTMLInputElement;
-                      engineRef.current?.openReader(input.value);
+                      openReader(input.value);
                       voiceService.speak(`Initializing search for ${input.value}. Accessing global pathology index.`);
                     }}
                   >
@@ -261,17 +313,13 @@ export default function App() {
         <section id="kids-zone" className="max-w-7xl mx-auto px-8 mb-32">
           <h2 className="text-center text-5xl font-bold uppercase tracking-widest mb-4">Quantum Kids: <span className="text-[var(--accent)]">Early Explorers</span></h2>
           <p className="text-center text-[#8b8b93] max-w-2xl mx-auto mb-12">A specially designed gateway for young minds to embark on their first scientific journey.</p>
-          
+
           <div className="flex flex-wrap justify-center gap-4 mb-12">
             {['Nature', 'Fruits', 'Vegetables', 'Hygiene'].map((subject) => (
               <div key={subject} className="relative group">
                 <button
-                  className={`subject-toggle px-8 py-3 rounded-full border border-white/10 bg-white/5 hover:bg-[var(--accent-dim)] hover:border-[var(--accent)] text-slate-300 font-bold uppercase tracking-widest transition-all cursor-pointer ${subject === 'Nature' ? 'active-subject' : ''}`}
-                  onClick={(e) => {
-                    engineRef.current?.switchKidsHub(subject as any);
-                    document.querySelectorAll('#kids-zone .subject-toggle').forEach(btn => btn.classList.remove('active-subject'));
-                    (e.currentTarget as HTMLElement).classList.add('active-subject');
-                  }}
+                  className={`subject-toggle px-8 py-3 rounded-full border border-white/10 bg-white/5 hover:bg-[var(--accent-dim)] hover:border-[var(--accent)] text-slate-300 font-bold uppercase tracking-widest transition-all cursor-pointer ${subject === kidsSubject ? 'active-subject' : ''}`}
+                  onClick={() => setKidsSubject(subject)}
                 >
                   {subject}
                 </button>
@@ -279,31 +327,20 @@ export default function App() {
             ))}
           </div>
 
-          <div id="kids-grid" className="rich-grid"></div>
-          <button 
-            id="btn-load-kids" 
-            className="rainbow-btn load-more-btn block mx-auto mt-12" 
-            onClick={() => engineRef.current?.loadMore('kids')}
-          >
-            <span>Expand Directory <i className="fas fa-chevron-down ml-2 text-xs"></i></span>
-          </button>
+          <TopicGrid category="kids" context={kidsSubject} onOpenReader={openReader} />
         </section>
 
-        {/* DYNAMIC GRIDS */}
+        {/* STUDY HUB */}
         <section id="study-hub" className="max-w-7xl mx-auto px-8 mb-32">
           <h2 className="text-center text-5xl font-bold uppercase tracking-widest mb-4">Theoretical <span className="text-[var(--accent)]">Sciences</span></h2>
           <p className="text-center text-[#8b8b93] max-w-2xl mx-auto mb-8">Rigorous exploration of advanced sciences integrated with LaTeX mathematical formulations.</p>
-          
+
           <div className="flex flex-wrap justify-center gap-4 mb-12">
             {['Physics', 'Chemistry', 'Biology', 'Mathematics'].map((subject) => (
               <div key={subject} className="relative group">
                 <button
-                  className={`subject-toggle px-8 py-3 rounded-full border border-white/10 bg-white/5 hover:bg-[var(--accent-dim)] hover:border-[var(--accent)] text-slate-300 font-bold uppercase tracking-widest transition-all cursor-pointer ${subject === 'Physics' ? 'active-subject' : ''}`}
-                  onClick={(e) => {
-                    engineRef.current?.switchStudyHub(subject as any);
-                    document.querySelectorAll('#study-hub .subject-toggle').forEach(btn => btn.classList.remove('active-subject'));
-                    (e.currentTarget as HTMLElement).classList.add('active-subject');
-                  }}
+                  className={`subject-toggle px-8 py-3 rounded-full border border-white/10 bg-white/5 hover:bg-[var(--accent-dim)] hover:border-[var(--accent)] text-slate-300 font-bold uppercase tracking-widest transition-all cursor-pointer ${subject === studySubject ? 'active-subject' : ''}`}
+                  onClick={() => setStudySubject(subject)}
                 >
                   {subject}
                 </button>
@@ -313,17 +350,10 @@ export default function App() {
 
           <div className="mb-12 border-l-2 border-[var(--accent)] pl-6">
             <h3 className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold mb-1">Active Research Domain</h3>
-            <div id="active-domain-display" className="text-2xl font-bold text-white uppercase tracking-wider">Physics</div>
+            <div className="text-2xl font-bold text-white uppercase tracking-wider">{studySubject}</div>
           </div>
 
-          <div id="study-grid" className="rich-grid"></div>
-          <button 
-            id="btn-load-study" 
-            className="rainbow-btn block mx-auto mt-12"
-            onClick={() => engineRef.current?.loadMore('study')}
-          >
-            <span>Load Advanced Topics</span>
-          </button>
+          <TopicGrid category="study" context={studySubject} onOpenReader={openReader} />
         </section>
 
         {/* COMPREHENSIVE QUIZ EVALUATION */}
@@ -337,85 +367,87 @@ export default function App() {
               <h2 className="text-3xl font-bold uppercase tracking-widest leading-tight">Cosmos & <span className="text-[var(--accent)]">Astrophysics</span></h2>
               <div className="flex flex-wrap gap-2">
                 {['solar', 'sun', 'blackhole', 'earth', 'moon', 'mars', 'jupiter', 'saturn', 'comet', 'asteroids', 'meteor', 'constellation', 'telescope'].map(id => (
-                  <button 
+                  <button
                     key={id}
-                    className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider hover:border-[var(--accent)] transition-all cursor-pointer"
-                    onClick={(e) => engineRef.current?.load3D('cosmos', id, e.currentTarget)}
+                    className={`px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider hover:border-[var(--accent)] transition-all cursor-pointer ${cosmosState.activeId === id ? 'bg-[var(--accent-dim)] border-[var(--accent)] text-white' : ''}`}
+                    onClick={() => engineLoad3D('cosmos', id, setCosmosState)}
                   >
                     {id}
                   </button>
                 ))}
               </div>
-              <div id="cosmos-text-container" className="prose prose-invert max-w-none text-slate-400 font-light leading-relaxed text-sm">
-                <p>Select a module to initialize orbital mechanics.</p>
+              <div className="prose prose-invert max-w-none text-slate-400 font-light leading-relaxed text-sm">
+                {cosmosState.desc ? <div dangerouslySetInnerHTML={{ __html: cosmosState.desc }} /> : <p>Select a module to initialize orbital mechanics.</p>}
               </div>
             </div>
             <div className="aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 relative">
-               <div id="cosmos-loader" className="absolute inset-0 flex items-center justify-center bg-[#020408] z-10 opacity-0 pointer-events-none transition-opacity">
+               <div className={`absolute inset-0 flex items-center justify-center bg-[#020408] z-10 pointer-events-none transition-opacity ${cosmosState.loading ? 'opacity-100' : 'opacity-0'}`}>
                  <div className="flex flex-col items-center gap-4">
                    <i className="fas fa-satellite-dish fa-spin text-3xl text-[var(--accent)]"></i>
                    <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Syncing Satellite...</span>
                  </div>
                </div>
-               <iframe id="cosmos-iframe" className="w-full h-full" frameBorder="0" allowFullScreen></iframe>
+               {cosmosState.iframeSrc && <iframe src={cosmosState.iframeSrc} className="w-full h-full" frameBorder="0" allowFullScreen onLoad={() => setCosmosState(s => ({ ...s, loading: false }))} />}
             </div>
           </div>
 
+          {/* ANATOMY */}
           <div id="anatomy-section" className="grid grid-cols-1 lg:grid-cols-[1.2fr_1.8fr] gap-12 bg-white/[0.02] border border-white/5 rounded-[var(--r)] p-12 backdrop-blur-xl">
             <div className="space-y-8">
               <h2 className="text-3xl font-bold uppercase tracking-widest leading-tight">Spatial <span className="text-[var(--accent)]">Anatomy</span></h2>
               <div className="flex flex-wrap gap-2">
                 {['internal', 'heart', 'brain', 'lungs', 'cardio', 'vein', 'head', 'facial', 'liver', 'urinary', 'malerepro', 'woman', 'uterus', 'fetus'].map(id => (
-                  <button 
+                  <button
                     key={id}
-                    className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider hover:border-[var(--accent)] transition-all cursor-pointer"
-                    onClick={(e) => engineRef.current?.load3D('ana', id, e.currentTarget)}
+                    className={`px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider hover:border-[var(--accent)] transition-all cursor-pointer ${anaState.activeId === id ? 'bg-[var(--accent-dim)] border-[var(--accent)] text-white' : ''}`}
+                    onClick={() => engineLoad3D('ana', id, setAnaState)}
                   >
                     {id}
                   </button>
                 ))}
               </div>
-              <div id="ana-text-container" className="prose prose-invert max-w-none text-slate-400 font-light leading-relaxed text-sm">
-                <p>High-fidelity systemic breakdowns awaiting initialization.</p>
+              <div className="prose prose-invert max-w-none text-slate-400 font-light leading-relaxed text-sm">
+                {anaState.desc ? <div dangerouslySetInnerHTML={{ __html: anaState.desc }} /> : <p>High-fidelity systemic breakdowns awaiting initialization.</p>}
               </div>
             </div>
             <div className="aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 relative">
-               <div id="ana-loader" className="absolute inset-0 flex items-center justify-center bg-[#020408] z-10 opacity-0 pointer-events-none transition-opacity">
+               <div className={`absolute inset-0 flex items-center justify-center bg-[#020408] z-10 pointer-events-none transition-opacity ${anaState.loading ? 'opacity-100' : 'opacity-0'}`}>
                  <div className="flex flex-col items-center gap-4">
                    <i className="fas fa-heartbeat fa-spin text-3xl text-[var(--accent)]"></i>
                    <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Rendering Viscera...</span>
                  </div>
                </div>
-               <iframe id="ana-iframe" className="w-full h-full" frameBorder="0" allowFullScreen></iframe>
+               {anaState.iframeSrc && <iframe src={anaState.iframeSrc} className="w-full h-full" frameBorder="0" allowFullScreen onLoad={() => setAnaState(s => ({ ...s, loading: false }))} />}
             </div>
           </div>
 
+          {/* HOSPITAL */}
           <div id="hospital-section" className="grid grid-cols-1 lg:grid-cols-[1.2fr_1.8fr] gap-12 bg-white/[0.02] border border-white/5 rounded-[var(--r)] p-12 backdrop-blur-xl">
             <div className="space-y-8">
               <h2 className="text-3xl font-bold uppercase tracking-widest leading-tight">Clinical <span className="text-[var(--accent)]">Environments</span></h2>
               <div className="flex flex-wrap gap-2">
                 {['recovery', 'autopsy', 'dental', 'anesthesia', 'infusion', 'portablexray', 'xrayviewer', 'equipments', 'lighting', 'syringe', 'nurse'].map(id => (
-                  <button 
+                  <button
                     key={id}
-                    className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider hover:border-[var(--accent)] transition-all cursor-pointer"
-                    onClick={(e) => engineRef.current?.load3D('hosp', id, e.currentTarget)}
+                    className={`px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider hover:border-[var(--accent)] transition-all cursor-pointer ${hospState.activeId === id ? 'bg-[var(--accent-dim)] border-[var(--accent)] text-white' : ''}`}
+                    onClick={() => engineLoad3D('hosp', id, setHospState)}
                   >
                     {id}
                   </button>
                 ))}
               </div>
-              <div id="hosp-text-container" className="prose prose-invert max-w-none text-slate-400 font-light leading-relaxed text-sm">
-                <p>Select a scenario to start clinical simulation.</p>
+              <div className="prose prose-invert max-w-none text-slate-400 font-light leading-relaxed text-sm">
+                {hospState.desc ? <div dangerouslySetInnerHTML={{ __html: hospState.desc }} /> : <p>Select a scenario to start clinical simulation.</p>}
               </div>
             </div>
             <div className="aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 relative">
-               <div id="hosp-loader" className="absolute inset-0 flex items-center justify-center bg-[#020408] z-10 opacity-0 pointer-events-none transition-opacity">
+               <div className={`absolute inset-0 flex items-center justify-center bg-[#020408] z-10 pointer-events-none transition-opacity ${hospState.loading ? 'opacity-100' : 'opacity-0'}`}>
                  <div className="flex flex-col items-center gap-4">
                    <i className="fas fa-hospital fa-spin text-3xl text-[var(--accent)]"></i>
                    <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Sterilizing Field...</span>
                  </div>
                </div>
-               <iframe id="hosp-iframe" className="w-full h-full" frameBorder="0" allowFullScreen></iframe>
+               {hospState.iframeSrc && <iframe src={hospState.iframeSrc} className="w-full h-full" frameBorder="0" allowFullScreen onLoad={() => setHospState(s => ({ ...s, loading: false }))} />}
             </div>
           </div>
         </section>
@@ -423,14 +455,7 @@ export default function App() {
         <section id="diseases-section" className="max-w-7xl mx-auto px-8 mb-32">
           <h2 className="text-center text-5xl font-bold uppercase tracking-widest mb-4">Pathology <span className="text-red-500">& Disease Index</span></h2>
           <p className="text-center text-[#8b8b93] max-w-2xl mx-auto mb-12">Comprehensive repository of infectious, genetic, and chronic diseases.</p>
-          <div id="diseases-grid" className="rich-grid"></div>
-          <button 
-            id="btn-load-diseases" 
-            className="rainbow-btn load-more-btn block mx-auto mt-12" 
-            onClick={() => engineRef.current?.loadMore('diseases')}
-          >
-            <span>Expand Pathology Index <i className="fas fa-chevron-down ml-2 text-xs"></i></span>
-          </button>
+          <TopicGrid category="diseases" context="diseases" onOpenReader={openReader} />
         </section>
 
         {/* STUDY PLAN SECTION */}
@@ -584,49 +609,14 @@ export default function App() {
       {/* REVIEWS SECTION */}
       <ReviewSection />
 
-      {/* READER MODAL */}
-      <div id="reader-modal">
-        <div className="reader-content relative bg-[#0d0d10fa] border border-white/10 rounded-[var(--r)] w-full max-w-6xl max-h-[90vh] overflow-y-auto p-16 shadow-[0_30px_100px_rgba(0,0,0,0.9)]">
-          <button className="absolute top-6 right-8 text-3xl text-[#8b8b93] hover:text-[var(--gold)] transition-transform hover:rotate-90" onClick={() => (document.getElementById('reader-modal')!.classList.remove('open'))}>
-            <i className="fas fa-times"></i>
-          </button>
-          <div className="flex flex-col lg:flex-row gap-16 items-start">
-            <div className="flex-1 w-full bg-black/40 rounded-2xl p-8 border border-white/5 min-h-[300px] flex items-center justify-center" id="rm-img-wrapper">
-              {/* Image inject */}
-            </div>
-            <div className="flex-[1.5] w-full">
-              <h2 id="rm-title" className="text-5xl font-bold text-[var(--accent)] mb-6 border-b border-white/5 pb-4 uppercase tracking-wide">Initializing...</h2>
-              <div id="rm-extract" className="text-lg font-light leading-relaxed text-[#f1f5f9] text-justify space-y-4"></div>
-              
-              {/* YouTube Video Section */}
-              <div id="rm-video-container" className="mt-16 hidden border-t border-white/5 pt-12">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-red-500/10 flex items-center justify-center rounded-xl border border-red-500/20">
-                      <i className="fab fa-youtube text-red-500 text-xl"></i>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-cyan-400">Comprehensive Course Repository</h3>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-widest font-mono">NEB / CDC Standardized Modules</p>
-                    </div>
-                  </div>
-                  <button 
-                    id="btn-curated-videos"
-                    className="px-6 py-2 bg-white/5 border border-white/10 hover:border-yellow-500/50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-yellow-500/5 flex items-center gap-2 group"
-                  >
-                    <i className="fas fa-award text-yellow-500 group-hover:scale-110 transition-transform"></i>
-                    Curated Excellence
-                  </button>
-                </div>
-                
-                <div id="rm-video-grid" className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Multiple videos will be injected here */}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* EBOOK CHAPTER READER */}
+      <ChapterReader
+        isOpen={readerOpen}
+        onClose={closeReader}
+        query={readerTopic}
+        context={readerContext}
+        onNavigate={openReader}
+      />
 
       <footer className="pt-32 border-t border-white/5 bg-[#08080a] relative overflow-hidden" style={{ paddingBottom: 'calc(10rem + env(safe-area-inset-bottom))' }}>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent"></div>

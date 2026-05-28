@@ -1,4 +1,4 @@
-const CACHE_NAME = 'axyomis-x-v3';
+const CACHE_NAME = 'axyomis-x-v4';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -32,18 +32,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for same-origin static assets
+  // Always network for Vite dev assets (JS/TS/CSS files) to get latest code
+  if (url.pathname.match(/\.(js|ts|tsx|css|json)$/)) {
+    event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+    return;
+  }
+
+  // Network-first for same-origin static assets (always get latest HTML)
   if (url.origin === self.location.origin) {
     event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) return cached;
-        return fetch(event.request).then((response) => {
-          if (response.ok && event.request.method === 'GET') {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        }).catch(() => caches.match('./index.html'));
+      fetch(event.request).then((response) => {
+        if (response.ok && event.request.method === 'GET') {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      }).catch(() => {
+        return caches.match(event.request).then((cached) => {
+          if (cached) return cached;
+          return caches.match('./index.html');
+        });
       })
     );
     return;

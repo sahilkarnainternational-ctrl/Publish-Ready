@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, XCircle, BrainCircuit, ChevronRight, RefreshCw, Trophy, Target, ShieldAlert, Crosshair, Atom, FlaskConical, Dna, Layers, Lock } from 'lucide-react';
+import { CheckCircle2, XCircle, BrainCircuit, ChevronRight, RefreshCw, Trophy, Target, ShieldAlert, Crosshair, Atom, FlaskConical, Dna, Layers, Lock, Calculator } from 'lucide-react';
 import allQuizData from '../data/axyomis_full_quiz.json';
 import { voiceService } from '../services/voice';
 import { useUser } from '../context/UserContext';
@@ -30,7 +30,7 @@ interface QuizQuestion {
 }
 
 type Difficulty = "kids" | "entry-level" | "mid-tier" | "advanced";
-type Subject = "physics" | "chemistry" | "biology" | "all";
+type Subject = "physics" | "chemistry" | "biology" | "mathematics" | "all";
 
 interface SessionResult {
   id: string;
@@ -399,8 +399,8 @@ export const QuizSection: React.FC = () => {
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
-                  {['physics', 'chemistry', 'biology', 'all'].map(subj => {
-                    const subjectIcons: Record<string, React.FC<any>> = { physics: Atom, chemistry: FlaskConical, biology: Dna, all: Layers };
+                  {['physics', 'chemistry', 'biology', 'mathematics', 'all'].map(subj => {
+                    const subjectIcons: Record<string, React.FC<any>> = { physics: Atom, chemistry: FlaskConical, biology: Dna, mathematics: Calculator, all: Layers };
                     const Icon = subjectIcons[subj];
                     return (
                       <button 

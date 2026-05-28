@@ -1,10 +1,12 @@
 import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signOut, 
-  onAuthStateChanged, 
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  signOut,
+  onAuthStateChanged,
   User,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -104,9 +106,31 @@ export const signInWithGoogle = async () => {
     const result = await signInWithPopup(auth, googleProvider);
     await syncUserToFirestore(result.user);
     return result.user;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error signing in with Google:", error);
+    // Fallback to redirect if popup blocked or failed
+    if (error?.code === 'auth/popup-blocked' || error?.code === 'auth/popup-closed-by-user') {
+      await signInWithRedirect(auth, googleProvider);
+    }
     throw error;
+  }
+};
+
+// Handle redirect result on page load
+export const handleGoogleRedirectResult = async () => {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result?.user) {
+      await syncUserToFirestore(result.user);
+      return result.user;
+    }
+    return null;
+  } catch (error: any) {
+    console.error("Error handling redirect result:", error);
+    if (error?.code === 'auth/unauthorized-domain') {
+      console.warn('Domain not authorized in Firebase console. Add this domain to authorized domains.');
+    }
+    return null;
   }
 };
 
