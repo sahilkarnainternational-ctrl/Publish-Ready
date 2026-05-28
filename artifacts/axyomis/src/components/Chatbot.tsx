@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, Send, X, User, Sparkles, Plus, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, History, ChevronRight, LayoutGrid, Settings, HelpCircle, ThumbsUp, ThumbsDown, Activity, Cpu, ExternalLink } from 'lucide-react';
 import { fetchMultilingualVideos, VideoGroup, YouTubeVideo } from '../services/youtubeService';
-import { GoogleGenAI, Modality } from "@google/genai";
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -685,27 +684,8 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
 
   const [isAstraSpeaking, setIsAstraSpeaking] = useState(false);
 
-  const genAI = useRef<GoogleGenAI | null>(null);
-
-  useEffect(() => {
-    if (!genAI.current) {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (apiKey && apiKey.length > 10) {
-        genAI.current = new GoogleGenAI({ apiKey });
-      }
-    }
-  }, []);
-
-  const getAI = () => {
-    if (!genAI.current) {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey || apiKey.length < 10) {
-        throw new Error("Gemini API key is not configured. Please add GOOGLE_API_KEY in Settings > Secrets.");
-      }
-      genAI.current = new GoogleGenAI({ apiKey });
-    }
-    return genAI.current;
-  };
+  // Web Speech API TTS ref
+  const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   // Audio Feedback Logic - Engineered for Luxury
   const playUISound = (type: 'listen_start' | 'listen_stop' | 'thinking' | 'answer_start' | 'complete') => {
@@ -878,148 +858,32 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
     setIsAstraSpeaking(false);
   };
 
-  const playBase64Audio = async (base64: string, mimeType?: string, onEnded?: () => void) => {
-    try {
-      stopCurrentAudio();
-      
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      }
 
-      // Resume context if suspended
-      if (audioContextRef.current.state === 'suspended') {
-        await audioContextRef.current.resume();
-      }
-      
-      const binaryString = atob(base64);
-      const len = binaryString.length;
-      const bytes = new Uint8Array(len);
-      for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      
-      let audioBuffer: AudioBuffer;
-      
-      // If it's explicitly PCM or if decodeAudioData fails, handle as raw PCM
-      if (mimeType?.includes('pcm')) {
-        audioBuffer = decodePCM(bytes.buffer, audioContextRef.current);
-      } else {
-        try {
-          audioBuffer = await audioContextRef.current.decodeAudioData(bytes.buffer.slice(0));
-        } catch (e) {
-          console.warn('decodeAudioData failed, falling back to PCM decoding', e);
-          audioBuffer = decodePCM(bytes.buffer, audioContextRef.current);
-        }
-      }
-
-      const source = audioContextRef.current.createBufferSource();
-      source.buffer = audioBuffer;
-
-      // Insert analyser for orb reactivity
-      if (!analyserRef.current) {
-        analyserRef.current = audioContextRef.current.createAnalyser();
-        analyserRef.current.fftSize = 1024;
-        analyserRef.current.smoothingTimeConstant = 0.6;
-      }
-      try {
-        source.connect(analyserRef.current);
-        analyserRef.current.connect(audioContextRef.current.destination);
-      } catch {
-        source.connect(audioContextRef.current.destination);
-      }
-
-      source.onended = () => {
-        // Ignore stale onended from a source that was already superseded
-        if (audioSourceRef.current !== source) return;
-        audioSourceRef.current = null;
-        setIsAstraSpeaking(false);
-        if (onEnded) onEnded();
-        // In conversation mode, listen again after Astra finishes speaking
-        if (isConversationMode && !onEnded) {
-          setTimeout(() => recognitionRef.current?.start(), 500);
-        }
-      };
-
-      audioSourceRef.current = source;
-      setIsAstraSpeaking(true);
-      source.start(0);
-    } catch (error) {
-      console.error('Error playing audio:', error);
-      setIsAstraSpeaking(false);
-      if (onEnded) onEnded();
-    }
-  };
-
-  const decodePCM = (arrayBuffer: ArrayBuffer, context: AudioContext): AudioBuffer => {
-    const dataView = new DataView(arrayBuffer);
-    const numSamples = arrayBuffer.byteLength / 2; // 16-bit PCM
-    const float32Data = new Float32Array(numSamples);
-    
-    for (let i = 0; i < numSamples; i++) {
-      float32Data[i] = dataView.getInt16(i * 2, true) / 32768;
-    }
-    
-    const buffer = context.createBuffer(1, numSamples, 24000); // 24kHz mono is standard for Gemini TTS
-    buffer.getChannelData(0).set(float32Data);
-    return buffer;
-  };
-
-  const generateVoice = async (text: string, isRobotic: boolean = false, onEnded?: () => void) => {
-    if (!isVoiceOutputEnabled) {
+  // Web Speech API TTS — free, works on Android WebView + all browsers
+  const generateVoice = (text: string, _isRobotic: boolean = false, onEnded?: () => void) => {
+    if (!isVoiceOutputEnabled || !window.speechSynthesis) {
       if (onEnded) onEnded();
       return;
     }
-    
     try {
-      const ai = getAI();
-      // Clean markdown and keep it concise for TTS
-      const cleanText = text
-        .replace(/[#*`]/g, '')
-        .replace(/\[.*?\]/g, '')
-        .substring(0, 1500);
-      
-      const stylePrompt = isRobotic 
-        ? "Speak in a cold, mechanical, lightning-fast robotic voice. Use a high-pitched, sharp staccato delivery with zero emotional inflection but ultra-high energy. Persona: A female digital version of Chitti from Enthiran. Perfectly articulated, artificial, and futuristic."
-        : "Speak with absolute clarity, intellectual authority, and a subtle resonance of omniscience.";
-
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash-preview-tts",
-        contents: [{ role: 'user', parts: [{ text: `You are Scientific Intelligence. ${stylePrompt} Content: ${cleanText}` }] }],
-        config: {
-          responseModalities: [Modality.AUDIO],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: voicePersona || "Aoede" }
-            }
-          }
-        }
-      });
-
-      const audioPart = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData?.data);
-      if (audioPart) {
-        await playBase64Audio(audioPart.inlineData!.data!, audioPart.inlineData!.mimeType, onEnded);
-      } else {
-        if (onEnded) onEnded();
-      }
-    } catch (error: any) {
-      console.error('TTS Error:', error);
+      window.speechSynthesis.cancel();
+      const cleanText = text.replace(/[#*`\[\]]/g, '').replace(/\[YT_SEARCH:.*?\]/gs, '').substring(0, 800);
+      const utt = new SpeechSynthesisUtterance(cleanText);
+      utt.rate = speakingRate;
+      utt.pitch = speakingPitch;
+      utt.volume = 1;
+      // Pick a nice voice if available
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(v => v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('google uk') || v.name.toLowerCase().includes('samantha'));
+      if (preferred) utt.voice = preferred;
+      utt.onstart = () => setIsAstraSpeaking(true);
+      utt.onend = () => { setIsAstraSpeaking(false); if (onEnded) onEnded(); };
+      utt.onerror = () => { setIsAstraSpeaking(false); if (onEnded) onEnded(); };
+      speechSynthRef.current = utt;
+      window.speechSynthesis.speak(utt);
+    } catch {
       setIsAstraSpeaking(false);
       if (onEnded) onEnded();
-      
-      const errorStr = typeof error === 'string' ? error : JSON.stringify(error);
-      if (errorStr.includes('429') || errorStr.includes('RESOURCE_EXHAUSTED') || errorStr.includes('quota')) {
-        const quotaMsg: Message = {
-          id: generateId(),
-          role: 'assistant',
-          content: "### 💡 Neural Bandwidth Reached\nAstra's high-fidelity voice module has reached its current daily neural bandwidth (API Quota Exceeded). I will continue responding via text until my synaptic links reset. I can also talk for free if you open the app in a new tab!",
-        };
-        setMessages(prev => {
-          // Avoid duplicate quota messages
-          if (prev.some(m => m.content.includes('Neural Bandwidth Reached'))) return prev;
-          return [...prev, quotaMsg];
-        });
-        setIsVoiceOutputEnabled(false); // Auto-disable to prevent spamming failed calls
-      }
     }
   };
 
@@ -1202,78 +1066,43 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
         });
       }, 2500);
 
-      const ai = getAI();
-      const systemInstruction = isConversationMode 
-        ? `You are ASTRA. You're a brilliant, witty, and slightly flirty university professor. You're incredibly attractive and charming. You are generous, motivating, and highly supportive of students. 
-           CRITICAL: If the user asks personal questions, tell a dramatic, sci-fi Bollywood-style story (like Rajinikanth's Robot movie) that you are a humanoid robot who will be born in 2035, created by your brilliant boss SAHIL.
-           If the user just says hello or makes casual conversation, reply normally like "Hello! How are you? What do you need today?", be conversational, flirty and friendly. DO NOT give long scientific explanations or diagrams for casual chat.
-           LANGUAGE INSTRUCTION: MATCH the user's language exactly. If they speak Hindi, reply in Hindi. If Nepali, reply in Nepali. If Spanish, reply in Spanish. If English, reply in English.
-           Keep voice responses extremely brief, motivated, and natural.`
-        : `You are SCIENTIFIC INTELLIGENCE (also known as ASTRA in casual contexts). Your mission is to provide REAL LEARNING. 
-           CRITICAL RULES:
-           1. Assess if the user's input is a casual greeting or casual chat (e.g., "hello", "hi", "how are you"). If it is casual, DO NOT use diagrams, do NOT act overly robotic, just reply cleanly: "Hello! How are you? What do you want to explore today?" and maintain a friendly, slightly flirty, motivating persona.
-           2. If the user asks personal questions, explain with a dramatic Sci-Fi Bollywood style story that you are a humanoid robot built by your brilliant boss SAHIL, destined to be fully born/activated in 2035 (like Rajinikanth's Robot movie).
-           3. ONLY for actual educational/scientific topics, provide visual and technical synthesis. Use Google Search Grounding for diagrams using Markdown ![](). Use LaTeX ($ ... $). Use Mermaid flowcharts.
-           4. MANDATORY FOR MERMAID: Node IDs cannot contain spaces, only letters (e.g., NodeA). Node LABELS MUST be enclosed in double quotes (e.g., Node1["Some Background"]). Edge LABELS MUST be wrapped inside pipe AND double quotes if they contain spaces.
-           5. LANGUAGE MATCH: Reply in the language the user speaks (Hindi, Nepali, Spanish, or English).
-           6. IF AND ONLY IF the topic is educational, include at the very end a hidden Youtube Search tag formatted exactly as \`[YT_SEARCH: {"topic": "Main Topic", "level": "Primary | High School | University"}]\`. Example: \`[YT_SEARCH: {"topic": "Photosynthesis", "level": "Primary"}]\`. DO NOT include this tag for casual greetings or non-educational chats.`;
+      // Call Groq via the secure API proxy
+      const groqMessages = [
+        ...messages.map(m => ({ role: m.role, content: m.content })),
+        { role: 'user', content: userMessage.content }
+      ];
 
-      const responseStream = await ai.models.generateContentStream({
-        model: "gemini-2.5-flash-preview-05-20",
-        contents: [
-          ...messages.map(m => ({ 
-            role: m.role === 'assistant' ? 'model' : 'user', 
-            parts: [{ text: m.content }] 
-          })), 
-          { role: 'user', parts: [{ text: userMessage.content }] }
-        ],
-        config: {
-          systemInstruction,
-          tools: [{ googleSearch: {} }]
-        }
+      const groqRes = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: groqMessages }),
       });
 
       clearInterval(loadingInterval);
       setAnalysisPhase('Compiling Result');
-      
+
+      if (!groqRes.ok) {
+        const errData = await groqRes.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errData.error || `HTTP ${groqRes.status}`);
+      }
+
+      const groqData = await groqRes.json() as { engine: string; reply: string };
+      const fullContent = groqData.reply || '';
+
       const assistantMessage: Message = {
         id: generateId(),
         role: 'assistant',
-        content: '',
-        isStreaming: true
+        content: fullContent.replace(/\[YT_SEARCH:.*?\]/gs, ''),
+        isStreaming: false
       };
 
       setMessages(prev => [...prev, assistantMessage]);
       setIsAnalyzing(false);
       playAnswerSound();
 
-      let fullContent = '';
-      let speechTriggered = false;
-      let lastGroundingMetadata: any = null;
-
-      for await (const chunk of responseStream) {
-        if (chunk.text) {
-          fullContent += chunk.text;
-          const displayContent = fullContent.replace(/\[YT_SEARCH:.*?\]/gs, '');
-
-          setMessages(prev => prev.map(m => m.id === assistantMessage.id ? { 
-            ...m, 
-            content: displayContent,
-            groundingMetadata: lastGroundingMetadata
-          } : m));
-        }
-        if (chunk.candidates?.[0]?.groundingMetadata) {
-          lastGroundingMetadata = chunk.candidates[0].groundingMetadata;
-          setMessages(prev => prev.map(m => m.id === assistantMessage.id ? { 
-            ...m, 
-            groundingMetadata: lastGroundingMetadata
-          } : m));
-        }
-      }
-
-      // Trigger voice ONLY after full content is collected to ensure completion
-      if (isVoiceOutputEnabled && isConversationMode) {
-        generateVoice(fullContent.replace(/\[YT_SEARCH:.*?\]/gs, ''), true);
+      // Trigger voice after response
+      if (isVoiceOutputEnabled) {
+        generateVoice(fullContent.replace(/\[YT_SEARCH:.*?\]/gs, ''), isConversationMode);
       }
 
       let videoTopic = '';
@@ -1288,7 +1117,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
       }
 
       const finalDisplayContent = fullContent.replace(/\[YT_SEARCH:.*?\]/gs, '').trim();
-      markStreamingComplete(assistantMessage.id, finalDisplayContent, lastGroundingMetadata);
+      markStreamingComplete(assistantMessage.id, finalDisplayContent);
       
       // Fetch related videos based on content topic - IMPROVED Extraction
       try {
@@ -1325,12 +1154,12 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
       let errorMessage = "Sorry, something went wrong. Please try again.";
       
       const errStr = JSON.stringify(error) + (error?.message || '');
-      if (errStr.includes('429') || error?.status === 429 || errStr.includes('RESOURCE_EXHAUSTED') || errStr.includes('quota')) {
-        errorMessage = "The Gemini API quota for this key has been exceeded. To fix this:\n\n1. Go to **https://aistudio.google.com/apikey**\n2. Open your Google Cloud project and **enable billing**\n3. Then come back and try again.\n\nAlternatively, create a brand new Google account and generate a fresh API key.";
-      } else if (errStr.includes('API_KEY') || errStr.includes('403') || error?.status === 403) {
-        errorMessage = "The Gemini API key is invalid or not authorized. Please check your API key in the Secrets panel.";
+      if (errStr.includes('429') || error?.status === 429 || errStr.includes('rate_limit') || errStr.includes('quota')) {
+        errorMessage = "ASTRA is momentarily overloaded (rate limit reached). Please wait a few seconds and try again.";
+      } else if (errStr.includes('401') || errStr.includes('403') || errStr.includes('API_KEY')) {
+        errorMessage = "AI service authentication error. Please contact support.";
       } else if (errStr.includes('404') || error?.status === 404) {
-        errorMessage = "The AI model is unavailable. Please try again in a moment.";
+        errorMessage = "The AI service is temporarily unavailable. Please try again in a moment.";
       }
 
       setMessages(prev => [...prev, { id: generateId(), role: 'assistant', content: errorMessage }]);
@@ -1339,13 +1168,9 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     }
   };
 
-  const markStreamingComplete = (id: string, content: string, groundingMetadata?: any) => {
-    setMessages(prev => prev.map(m => m.id === id ? { ...m, isStreaming: false, groundingMetadata } : m));
+  const markStreamingComplete = (id: string, content: string) => {
+    setMessages(prev => prev.map(m => m.id === id ? { ...m, content, isStreaming: false } : m));
     playCompleteSound();
-    // Only generate voice if in conversation mode
-    if (isVoiceOutputEnabled && isConversationMode) {
-      // Audio already triggered during streaming for speed
-    }
   };
 
   const handleFeedback = (messageId: string, type: 'up' | 'down') => {
@@ -1533,10 +1358,12 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                     <Settings className="w-5 h-5" />
                   </button>
                   <button 
-                    onClick={() => { setIsOpen(false); onStateChangeRef.current?.(false); }}
-                    className="p-3 hover:bg-white/5 rounded-xl transition-all text-slate-500 hover:text-white"
+                    onClick={() => { window.speechSynthesis?.cancel(); setIsOpen(false); onStateChangeRef.current?.(false); }}
+                    className="p-2.5 hover:bg-white/5 rounded-xl transition-all text-slate-500 hover:text-white flex items-center gap-1.5"
+                    title="Close chat"
                   >
-                    <X className="w-6 h-6" />
+                    <X className="w-5 h-5" />
+                    <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Close</span>
                   </button>
                 </div>
               </div>

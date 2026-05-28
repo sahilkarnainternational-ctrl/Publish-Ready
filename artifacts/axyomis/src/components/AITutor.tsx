@@ -6,7 +6,6 @@ import {
   GraduationCap, ChevronDown, HelpCircle, Zap, Star, Calendar, AlertTriangle,
   SkipForward, MessageCircle
 } from 'lucide-react';
-import { GoogleGenAI } from '@google/genai';
 import { useUser } from '../context/UserContext';
 import { UpgradeModal } from './UpgradeModal';
 import { logActivity } from '../services/activityService';
@@ -47,7 +46,16 @@ const SUBJECT_FACTS: Record<string, string[]> = {
   'AI & Computer Science': ['The first computer bug was a real insect found in a relay in 1947.','Modern GPUs can perform over 100 trillion operations per second.'],
 };
 
-const genAI = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
+async function groqChat(systemPrompt: string, userPrompt: string): Promise<string> {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: [{ role: 'user', content: `${systemPrompt}\n\n${userPrompt}` }] }),
+  });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  const data = await res.json() as { reply: string };
+  return data.reply ?? '';
+}
 
 function getDayOfYear(): number {
   const now = new Date();
@@ -60,31 +68,26 @@ function getChapterOfDay(subject: string): string {
 }
 
 async function generateLesson(subject: string, chapter: string, classLevel: string): Promise<string> {
-  if (!genAI) return 'AI features require a GEMINI_API_KEY.';
-  const r = await genAI.models.generateContent({
-    model: 'gemini-2.0-flash',
-    contents: [{ role: 'user', parts: [{ text: `You are an expert ${subject} teacher for a ${classLevel} student.\nTeach the chapter: "${chapter}".\nFormat in Markdown with:\n1. **Learning Objectives** (3-4 bullets)\n2. **Key Concepts** (clear examples for ${classLevel})\n3. **Important Formulas / Definitions** (if applicable, use LaTeX $...$ for math)\n4. **Real-World Applications** (2-3 examples)\n5. **Key Takeaways** (3 bullets)\nKeep it engaging and exactly right for ${classLevel}.` }] }],
-  });
-  return r.text ?? '';
+  return groqChat(
+    `You are an expert ${subject} teacher for a ${classLevel} student.`,
+    `Teach the chapter: "${chapter}".\nFormat in Markdown with:\n1. **Learning Objectives** (3-4 bullets)\n2. **Key Concepts** (clear examples for ${classLevel})\n3. **Important Formulas / Definitions** (if applicable, use LaTeX $...$ for math)\n4. **Real-World Applications** (2-3 examples)\n5. **Key Takeaways** (3 bullets)\nKeep it engaging and exactly right for ${classLevel}.`
+  );
 }
 
 async function generateSummary(subject: string, chapter: string, classLevel: string): Promise<string> {
-  if (!genAI) return 'AI features require a GEMINI_API_KEY.';
-  const r = await genAI.models.generateContent({
-    model: 'gemini-2.0-flash',
-    contents: [{ role: 'user', parts: [{ text: `Concise exam-ready summary of "${chapter}" in ${subject} for ${classLevel} student.\nInclude:\n- One-line definition\n- 5 must-know facts (numbered)\n- Common exam mistakes to avoid\n- Quick memory tips / mnemonics\nUse Markdown. Be punchy.` }] }],
-  });
-  return r.text ?? '';
+  return groqChat(
+    `You are an expert exam tutor for ${classLevel}.`,
+    `Concise exam-ready summary of "${chapter}" in ${subject}.\nInclude:\n- One-line definition\n- 5 must-know facts (numbered)\n- Common exam mistakes to avoid\n- Quick memory tips / mnemonics\nUse Markdown. Be punchy.`
+  );
 }
 
 async function generateQuiz(subject: string, chapter: string, classLevel: string): Promise<QuizQuestion[]> {
-  if (!genAI) return [];
-  const r = await genAI.models.generateContent({
-    model: 'gemini-2.0-flash',
-    contents: [{ role: 'user', parts: [{ text: `Generate 5 MCQ questions on "${chapter}" in ${subject} for ${classLevel}.\nReturn ONLY valid JSON array, no markdown:\n[{"question":"...","options":["A. ...","B. ...","C. ...","D. ..."],"correctIndex":0,"explanation":"..."}]` }] }],
-  });
+  const text = await groqChat(
+    `You are a quiz generator. Return ONLY a valid JSON array, no markdown fences, no explanation.`,
+    `Generate 5 MCQ questions on "${chapter}" in ${subject} for ${classLevel}.\nReturn ONLY a valid JSON array like:\n[{"question":"...","options":["A. ...","B. ...","C. ...","D. ..."],"correctIndex":0,"explanation":"..."}]`
+  );
   try {
-    const m = (r.text ?? '').match(/\[[\s\S]*\]/);
+    const m = text.match(/\[[\s\S]*\]/);
     return m ? JSON.parse(m[0]) : [];
   } catch { return []; }
 }
@@ -138,22 +141,15 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat })
     const key = `fact_${selectedSubject}_${getDayOfYear()}`;
     const cached = sessionStorage.getItem(key);
     if (cached) { setFactOfDay(cached); return; }
-    if (!genAI) {
-      const fallbacks = SUBJECT_FACTS[selectedSubject] || SUBJECT_FACTS.Science;
-      const fact = fallbacks[getDayOfYear() % fallbacks.length];
-      setFactOfDay(fact);
-      return;
-    }
-    genAI.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: [{ role: 'user', parts: [{ text: `Give ONE fascinating, accurate, and surprising fact about ${selectedSubject} appropriate for a ${effectiveClass} student. Keep it to 1-2 sentences. No intro like "Did you know" — just the fact directly.` }] }],
-    }).then(r => {
-      const f = r.text?.trim() ?? '';
-      if (f) { setFactOfDay(f); sessionStorage.setItem(key, f); }
-    }).catch(() => {
-      const fallbacks = SUBJECT_FACTS[selectedSubject] || SUBJECT_FACTS.Science;
-      setFactOfDay(fallbacks[getDayOfYear() % fallbacks.length]);
-    });
+    const fallbacks = SUBJECT_FACTS[selectedSubject] || SUBJECT_FACTS.Science;
+    // Show fallback immediately, then try to fetch a fresh one
+    setFactOfDay(fallbacks[getDayOfYear() % fallbacks.length]);
+    groqChat(
+      'You are a science educator.',
+      `Give ONE fascinating, accurate, and surprising fact about ${selectedSubject} appropriate for a ${effectiveClass} student. Keep it to 1-2 sentences. No intro like "Did you know" — just the fact directly.`
+    ).then(f => {
+      if (f.trim()) { setFactOfDay(f.trim()); sessionStorage.setItem(key, f.trim()); }
+    }).catch(() => {});
   }, [isOpen, selectedSubject, effectiveClass]);
 
   const chapters = CHAPTERS_BY_SUBJECT[selectedSubject] || [];

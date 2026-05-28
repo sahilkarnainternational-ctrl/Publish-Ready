@@ -1,14 +1,22 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { HelpCircle, Send, ImagePlus, X, Loader2, Lightbulb, ChevronDown, ChevronUp, Globe } from 'lucide-react';
-import { GoogleGenAI } from '@google/genai';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 
-const genAI = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
+async function groqChat(prompt: string): Promise<string> {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),
+  });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  const data = await res.json() as { reply: string };
+  return data.reply ?? '';
+}
 
 const CURRICULA = [
   { label: '🇳🇵 Nepal (NEB)', value: 'Nepal', curriculum: 'Nepal Education Board (NEB) and CDC Nepal curriculum. Reference specific Nepali textbooks such as "Science and Environment" by CDC for secondary level, and Curriculum Development Centre textbooks.' },
@@ -80,44 +88,24 @@ export const DoubtsSection: React.FC<DoubtsSectionProps> = ({ subject, classLeve
 
   const submitDoubt = async () => {
     if (!question.trim() && !imageBase64) return;
-    if (!genAI) { setError('AI features require GEMINI_API_KEY.'); return; }
 
     setLoading(true);
     setError('');
 
-    const systemPrompt = `You are an expert ${subject} teacher and doubt solver. The student is in ${classLevel}, studying under the ${curriculumInfo.curriculum}
+    const prompt = `You are an expert ${subject} teacher and doubt solver. The student is in ${classLevel}, studying under the ${curriculumInfo.curriculum}
 
-Your task: Answer the student's question with 100% accuracy and clarity. Follow these rules:
+Answer the student's question with 100% accuracy and clarity:
 1. Be completely accurate — no approximations or simplified wrong answers
 2. Explain step-by-step at the level appropriate for ${classLevel}
-3. Reference specific textbooks, chapters, or curriculum standards from ${curriculumInfo.value} where relevant
-4. If the question involves math, show every step with LaTeX formatting (use $ for inline, $$ for block)
+3. Reference specific textbooks or curriculum standards from ${curriculumInfo.value} where relevant
+4. If the question involves math, show every step with LaTeX formatting ($ for inline, $$ for block)
 5. Include a "Key Concept" summary at the end
-6. If the student is from Nepal and asks about a topic, relate examples to Nepal's geography, culture, or context where appropriate
-7. Format beautifully with Markdown — use headers, bullet points, and emphasis
+6. Format beautifully with Markdown — use headers, bullet points, and emphasis
 
-Subject context: ${subject}
-Student class: ${classLevel}
-Curriculum: ${curriculumInfo.curriculum}`;
+${imageBase64 ? '[Note: Student attached an image — describe what you understand from the question context and answer thoroughly]\n' : ''}Student question: ${question || '[Image-based question — please answer based on subject context]'}`;
 
     try {
-      const parts: any[] = [{ text: systemPrompt + '\n\nStudent question: ' + (question || '[See image above]') }];
-
-      if (imageBase64) {
-        parts.unshift({
-          inlineData: {
-            mimeType: imageFile?.type || 'image/jpeg',
-            data: imageBase64,
-          }
-        });
-      }
-
-      const response = await genAI.models.generateContent({
-        model: 'gemini-2.0-flash',
-        contents: [{ role: 'user', parts }],
-      });
-
-      const answer = response.text ?? 'Unable to generate answer. Please try again.';
+      const answer = await groqChat(prompt);
 
       setDoubts(prev => [{
         id: Date.now().toString(),
@@ -130,7 +118,7 @@ Curriculum: ${curriculumInfo.curriculum}`;
 
       setQuestion('');
       clearImage();
-    } catch (e: any) {
+    } catch {
       setError('Failed to get answer. Please try again.');
     }
     setLoading(false);
