@@ -983,7 +983,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
         : "Speak with absolute clarity, intellectual authority, and a subtle resonance of omniscience.";
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash-preview-tts",
+        model: "gemini-3.1-flash-tts-preview",
         contents: [{ role: 'user', parts: [{ text: `You are Scientific Intelligence. ${stylePrompt} Content: ${cleanText}` }] }],
         config: {
           responseModalities: [Modality.AUDIO],
@@ -1219,7 +1219,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
            6. IF AND ONLY IF the topic is educational, include at the very end a hidden Youtube Search tag formatted exactly as \`[YT_SEARCH: {"topic": "Main Topic", "level": "Primary | High School | University"}]\`. Example: \`[YT_SEARCH: {"topic": "Photosynthesis", "level": "Primary"}]\`. DO NOT include this tag for casual greetings or non-educational chats.`;
 
       const responseStream = await ai.models.generateContentStream({
-        model: "gemini-2.0-flash",
+        model: "gemini-2.5-flash",
         contents: [
           ...messages.map(m => ({ 
             role: m.role === 'assistant' ? 'model' : 'user', 
