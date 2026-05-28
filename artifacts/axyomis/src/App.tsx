@@ -12,6 +12,7 @@ import { Profile } from './components/Profile';
 import { PremiumSection } from './components/PremiumSection';
 import { AITutor } from './components/AITutor';
 import { StudyPlan } from './components/StudyPlan';
+import { StudyAnalytics } from './components/StudyAnalytics';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { ReviewSection } from './components/ReviewSection';
 import { ParentReport } from './components/ParentReport';
@@ -434,6 +435,9 @@ export default function App() {
 
         {/* STUDY PLAN SECTION */}
         <StudyPlan />
+
+        {/* STUDY ANALYTICS DASHBOARD */}
+        <StudyAnalytics />
 
         {/* AI TUTOR PROMO BANNER */}
         <section className="max-w-7xl mx-auto px-8 mb-24">

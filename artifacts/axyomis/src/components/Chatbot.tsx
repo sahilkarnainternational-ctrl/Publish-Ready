@@ -10,6 +10,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import mermaid from 'mermaid';
 import { AstraOrb, type OrbState } from './AstraOrb';
+import { useUser } from '../context/UserContext';
 
 // Initialize Mermaid
 mermaid.initialize({
@@ -578,6 +579,7 @@ interface ChatbotProps {
 }
 
 export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, startInConversationMode, hideToggle }) => {
+  const { effectiveTier } = useUser();
   const [isOpen, setIsOpen] = useState(false);
 
   const onStateChangeRef = useRef(onStateChange);
@@ -1176,6 +1178,10 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
 
     try {
       setHasInteracted(true);
+      // Free tier gets a small processing delay to differentiate from paid tiers
+      if (effectiveTier === 'free') {
+        await new Promise(resolve => setTimeout(resolve, 1800));
+      }
       // Phase 1: Local Pre-processing animations
       playThinkingSound();
       await new Promise(resolve => setTimeout(resolve, 800));

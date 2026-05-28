@@ -1,8 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, XCircle, BrainCircuit, ChevronRight, RefreshCw, Trophy, Target, ShieldAlert, Crosshair, Atom, FlaskConical, Dna, Layers } from 'lucide-react';
+import { CheckCircle2, XCircle, BrainCircuit, ChevronRight, RefreshCw, Trophy, Target, ShieldAlert, Crosshair, Atom, FlaskConical, Dna, Layers, Lock } from 'lucide-react';
 import allQuizData from '../data/axyomis_full_quiz.json';
 import { voiceService } from '../services/voice';
+import { useUser } from '../context/UserContext';
+import { UpgradeModal } from './UpgradeModal';
+
+const FREE_DAILY_LIMIT = 5;
+
+function getDailyQuizCount(): number {
+  const key = `axyomis_quiz_day_${new Date().toISOString().slice(0, 10)}`;
+  return parseInt(localStorage.getItem(key) ?? '0', 10);
+}
+
+function incrementDailyQuizCount(): void {
+  const key = `axyomis_quiz_day_${new Date().toISOString().slice(0, 10)}`;
+  localStorage.setItem(key, String(getDailyQuizCount() + 1));
+}
 
 interface QuizQuestion {
   id: string;
@@ -40,6 +54,10 @@ const MathJaxText: React.FC<{ content?: string; className?: string }> = ({ conte
 };
 
 export const QuizSection: React.FC = () => {
+  const { isPremium, isTrialActive } = useUser() as any;
+  const isUnlimited = isPremium || isTrialActive;
+  const [showQuizUpgrade, setShowQuizUpgrade] = useState(false);
+  const [dailyCount, setDailyCount] = useState(getDailyQuizCount);
   const [gameActive, setGameActive] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -143,6 +161,14 @@ export const QuizSection: React.FC = () => {
   };
 
   const startGame = (difficulty: Difficulty, subject: Subject, count: number) => {
+    if (!isUnlimited && dailyCount >= FREE_DAILY_LIMIT) {
+      setShowQuizUpgrade(true);
+      return;
+    }
+    if (!isUnlimited) {
+      incrementDailyQuizCount();
+      setDailyCount(getDailyQuizCount());
+    }
     let pool = (allQuizData as QuizQuestion[]).filter(q => q.difficulty === difficulty);
     if (subject !== "all") {
       pool = pool.filter(q => q.category.toLowerCase() === subject);
@@ -240,14 +266,29 @@ export const QuizSection: React.FC = () => {
   };
 
   return (
-    <section id="evaluation-quiz" className="max-w-4xl mx-auto px-8 mb-32 relative z-10">
+    <section id="evaluation-quiz" className="max-w-4xl mx-auto px-4 sm:px-8 mb-32 relative z-10">
+      <UpgradeModal
+        open={showQuizUpgrade}
+        onClose={() => setShowQuizUpgrade(false)}
+        featureName="Unlimited Quizzes"
+        requiredTier="scholar"
+        description="removes the 5-quiz daily limit so you can practice as much as you need, every day."
+      />
       <div className="text-center mb-10">
-        <h2 className="text-5xl font-bold uppercase tracking-widest mb-4">
+        <h2 className="text-4xl sm:text-5xl font-bold uppercase tracking-widest mb-4">
           Evaluation <span className="text-[var(--accent)]">Quiz</span>
         </h2>
         <p className="text-[#8b8b93] max-w-2xl mx-auto">
           Test your conceptual and analytical framework across high-tier science disciplines.
         </p>
+        {!isUnlimited && (
+          <div className="mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+            <Lock className="w-3 h-3 text-amber-400" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">
+              {Math.max(0, FREE_DAILY_LIMIT - dailyCount)} of {FREE_DAILY_LIMIT} free quizzes remaining today
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="bg-[#0d0d10a6] p-8 md:p-12 border border-white/10 rounded-[32px] shadow-2xl backdrop-blur-xl relative overflow-hidden min-h-[500px] flex flex-col justify-center">
