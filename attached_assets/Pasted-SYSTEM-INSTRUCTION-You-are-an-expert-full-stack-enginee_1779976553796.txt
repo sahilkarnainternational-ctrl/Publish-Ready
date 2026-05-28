@@ -1,0 +1,131 @@
+SYSTEM INSTRUCTION:
+You are an expert full-stack engineer. 
+Your task is to fully remove Google Gemini API usage from this project and replace it with Groq AI only.
+The app must work fully on free tier with no paid APIs.
+
+IMPORTANT RULES:
+- DELETE all Gemini-related code, imports, environment variables, SDKs, endpoints, and references
+- DO NOT leave any fallback or commented Gemini code
+- Use Groq as the ONLY LLM provider
+- Use browser-based free voice APIs (no paid speech APIs)
+- Ensure the app works on web AND when wrapped as an Android APK (WebView)
+
+--------------------------------------------------
+BACKEND REQUIREMENTS (Node / Express)
+--------------------------------------------------
+
+1. Use Groq OpenAI-compatible API ONLY
+
+Environment variable:
+GROQ_KEY
+
+Base URL:
+https://api.groq.com/openai/v1
+
+Model:
+llama3-70b-8192 (primary)
+llama3-8b-8192 (optional fallback)
+
+2. Create a single AI endpoint:
+
+POST /api/chat
+
+Input:
+{
+  "prompt": "user message"
+}
+
+Output:
+{
+  "engine": "groq",
+  "reply": "AI response text"
+}
+
+3. Groq chat implementation (MANDATORY):
+
+- Use OpenAI SDK
+- Use chat.completions.create
+- System prompt: educational assistant, explains clearly, can describe diagrams using text, bullet points, markdown, and ASCII
+
+4. NO Gemini. NO Claude. NO billing.
+
+--------------------------------------------------
+FRONTEND REQUIREMENTS
+--------------------------------------------------
+
+1. Chat UI:
+- Input box
+- Send button
+- Chat history
+- Display AI responses cleanly
+- Support markdown rendering
+
+2. Diagram handling:
+- Diagrams must be TEXT-BASED (ASCII / markdown)
+- NO image generation APIs
+- Example: flowcharts, anatomy blocks, step diagrams using text
+
+--------------------------------------------------
+VOICE MODULE (FREE ONLY)
+--------------------------------------------------
+
+VOICE INPUT (Speech → Text):
+- Use Web Speech API (SpeechRecognition / webkitSpeechRecognition)
+- Must work in:
+  - Chrome
+  - Android WebView
+- No API keys
+- Button to start listening 🎤
+
+VOICE OUTPUT (Text → Speech):
+- Use SpeechSynthesis API
+- Speak AI responses automatically
+- Select default system voice
+
+Example logic:
+- User speaks → speech converted to text
+- Text sent to /api/chat
+- Groq returns text
+- Browser speaks the reply
+
+--------------------------------------------------
+ANDROID APK COMPATIBILITY (CRITICAL)
+--------------------------------------------------
+
+The app WILL be wrapped into an Android APK using WebView.
+So you MUST ensure:
+
+1. Use ONLY browser-native APIs:
+   - SpeechRecognition
+   - SpeechSynthesis
+2. No insecure HTTP calls (use relative paths)
+3. No blocked permissions
+4. Works without Google services
+
+Android WebView Notes:
+- Web Speech API works on most Android devices
+- If SpeechRecognition is unavailable, fall back to text input automatically
+
+--------------------------------------------------
+FAILSAFE REQUIREMENTS
+--------------------------------------------------
+
+- If voice input fails → allow typing
+- If voice output fails → show text only
+- App must NEVER crash due to AI failure
+- Show friendly error message if Groq API is unavailable
+
+--------------------------------------------------
+FINAL DELIVERABLE
+--------------------------------------------------
+
+Return:
+1. Cleaned backend code (Gemini fully removed)
+2. Cleaned frontend code
+3. Voice-enabled chatbot working with Groq
+4. Clear comments in code
+5. Ready to run on Replit and ready for APK wrapping
+
+DO NOT explain.
+DO NOT ask questions.
+JUST IMPLEMENT.
