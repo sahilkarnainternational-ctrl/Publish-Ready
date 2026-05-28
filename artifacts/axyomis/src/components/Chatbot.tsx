@@ -690,7 +690,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
   useEffect(() => {
     if (!genAI.current) {
       const apiKey = process.env.GEMINI_API_KEY;
-      if (apiKey && apiKey !== 'UNDEFINED') {
+      if (apiKey && apiKey.length > 10) {
         genAI.current = new GoogleGenAI({ apiKey });
       }
     }
@@ -699,8 +699,8 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
   const getAI = () => {
     if (!genAI.current) {
       const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey || apiKey === 'UNDEFINED') {
-        throw new Error("GEMINI_API_KEY is not set. Please set it in Settings > Secrets.");
+      if (!apiKey || apiKey.length < 10) {
+        throw new Error("Gemini API key is not configured. Please add GOOGLE_API_KEY in Settings > Secrets.");
       }
       genAI.current = new GoogleGenAI({ apiKey });
     }
