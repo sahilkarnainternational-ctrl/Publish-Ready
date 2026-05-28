@@ -69,13 +69,43 @@
     <div id="root"></div>
     <script type="module" src="./src/main.tsx"></script>
     <script>
+      // Unregister old service workers to prevent stale cache
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./service-worker.js')
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          regs.forEach(reg => {
+            if (reg.scope.includes('axyomis') || reg.scope.includes(window.location.hostname)) {
+              console.log('[SW] Unregistering old worker:', reg.scope);
+              reg.unregister();
+            }
+          });
+          // Register fresh after cleanup
+          navigator.serviceWorker.register('./service-worker.js?v=4')
             .then(reg => console.log('[SW] Registered:', reg.scope))
             .catch(err => console.log('[SW] Registration failed:', err));
         });
       }
+
+      // Emergency loader fallback — dismiss loader quickly so the app is visible
+      (function() {
+        const start = Date.now();
+        const check = setInterval(function() {
+          const bar = document.getElementById('loader-bar');
+          const pctEl = document.getElementById('loader-pct');
+          const loader = document.getElementById('loader');
+          if (!bar || !pctEl || !loader) { clearInterval(check); return; }
+
+          const elapsed = Date.now() - start;
+          const pct = Math.min(100, Math.floor((elapsed / 300) * 100));
+          bar.style.width = pct + '%';
+          pctEl.innerText = pct + '%';
+
+          if (elapsed >= 300) {
+            clearInterval(check);
+            loader.classList.add('loader-exit');
+            setTimeout(function() { loader.style.display = 'none'; }, 300);
+          }
+        }, 30);
+      })();
     </script>
   </body>
 </html>
