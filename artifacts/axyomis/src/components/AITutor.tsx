@@ -98,6 +98,7 @@ interface AITutorProps {
   onClose: () => void;
   onOpenChat?: () => void;
   onOpenReader?: (topic: string, subject: string) => void;
+  initialMode?: 'doubts' | 'lesson';
 }
 
 export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat, onOpenReader }) => {
@@ -136,6 +137,14 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat, o
       setSelectedSubject(effectiveSubjects[0]);
     }
   }, [effectiveSubjects]);
+
+  useEffect(() => {
+    if (!isOpen || !initialMode) return;
+    if (initialMode === 'doubts') {
+      setActiveTab('doubts');
+      setSelectedChapter('__doubts__');
+    }
+  }, [isOpen, initialMode]);
 
   // Load fact of day
   useEffect(() => {

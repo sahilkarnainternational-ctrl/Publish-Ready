@@ -19,7 +19,7 @@ import { ReviewSection } from './components/ReviewSection';
 import { ParentReport } from './components/ParentReport';
 import { auth, getUserProfile, handleGoogleRedirectResult } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { User as LucideUser, Volume2, Shield, Radio, Activity, Terminal, Brain, Crown, GraduationCap } from 'lucide-react';
+import { User as LucideUser, Volume2, Shield, Radio, Activity, Terminal, Brain, Crown, GraduationCap, HelpCircle, X } from 'lucide-react';
 import { MarqueeBanner } from './components/MarqueeBanner';
 import { Globe } from './components/Globe';
 import { ScrollExpansionHero } from './components/ScrollExpansionHero';
@@ -44,6 +44,7 @@ export default function App() {
   const [readerOpen, setReaderOpen] = useState(false);
   const [readerTopic, setReaderTopic] = useState('');
   const [readerContext, setReaderContext] = useState('');
+  const [initialTutorMode, setInitialTutorMode] = useState<'doubts' | 'lesson' | undefined>(undefined);
 
   // Topic grid states
   const [studySubject, setStudySubject] = useState('Physics');
@@ -120,6 +121,15 @@ export default function App() {
     setIsChatOpen(false);
     setIsAstraVoiceOpen(false);
     setReaderOpen(false);
+    setInitialTutorMode(undefined);
+    setIsAITutorOpen(true);
+  }, []);
+
+  const openDoubtSolver = useCallback(() => {
+    setIsChatOpen(false);
+    setIsAstraVoiceOpen(false);
+    setReaderOpen(false);
+    setInitialTutorMode('doubts');
     setIsAITutorOpen(true);
   }, []);
 
@@ -314,6 +324,26 @@ export default function App() {
                   >
                     <Volume2 className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform" />
                     <span>Talk with Astra</span>
+                  </button>
+                  <button
+                    onClick={openDoubtSolver}
+                    className="ambient-glow flex items-center gap-3 px-8 py-4 bg-white/10 border border-white/15 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white hover:bg-white/15 transition-all shadow-[0_0_30px_rgba(255,255,255,0.08)]"
+                  >
+                    <HelpCircle className="w-4 h-4 text-cyan-300" />
+                    <span>Doubt Solver</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsChatOpen(false);
+                      setIsAstraVoiceOpen(false);
+                      setIsAITutorOpen(false);
+                      setReaderOpen(false);
+                      window.speechSynthesis?.cancel();
+                    }}
+                    className="ambient-glow flex items-center gap-3 px-8 py-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white hover:bg-red-500/15 transition-all shadow-[0_0_30px_rgba(239,68,68,0.18)]"
+                  >
+                    <X className="w-4 h-4 text-red-300" />
+                    <span>Terminate</span>
                   </button>
                   <div className="flex -space-x-3">
                     {[1,2,3].map(i => (
@@ -756,9 +786,13 @@ export default function App() {
       <Profile isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
       <AITutor
         isOpen={isAITutorOpen}
-        onClose={() => setIsAITutorOpen(false)}
+        onClose={() => {
+          setIsAITutorOpen(false);
+          setInitialTutorMode(undefined);
+        }}
         onOpenChat={openChat}
         onOpenReader={openReader}
+        initialMode={initialTutorMode}
       />
       <OnboardingFlow isOpen={isOnboardingOpen} onClose={() => setIsOnboardingOpen(false)} />
       <OriginDialog 

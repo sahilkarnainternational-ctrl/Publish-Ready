@@ -1471,11 +1471,11 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                   </button>
                   <button 
                     onClick={() => { window.speechSynthesis?.cancel(); setIsOpen(false); onStateChangeRef.current?.(false); }}
-                    className="p-2.5 hover:bg-white/5 rounded-xl transition-all text-slate-500 hover:text-white flex items-center gap-1.5"
-                    title="Close chat"
+                    className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-red-500/10 transition-all text-slate-200 hover:text-white flex items-center gap-2"
+                    title="Exit chat"
                   >
-                    <X className="w-5 h-5" />
-                    <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Close</span>
+                    <X className="w-4 h-4" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Exit</span>
                   </button>
                 </div>
               </div>

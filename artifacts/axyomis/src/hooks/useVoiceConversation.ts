@@ -18,6 +18,7 @@ export interface VoiceTurn {
 export function useVoiceConversation(isActive: boolean) {
   const [turns, setTurns] = useState<VoiceTurn[]>([]);
   const [liveTranscript, setLiveTranscript] = useState('');
+  const [transcriptHistory, setTranscriptHistory] = useState<string[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
@@ -188,6 +189,9 @@ export function useVoiceConversation(isActive: boolean) {
       const display = (finalText || interim).trim();
       setLiveTranscript(display);
       inputRef.current = display;
+      if (finalText.trim()) {
+        setTranscriptHistory(prev => [finalText.trim(), ...prev].slice(0, 4));
+      }
     };
 
     recognition.onend = () => {
@@ -272,6 +276,8 @@ export function useVoiceConversation(isActive: boolean) {
   const stopAll = useCallback(() => {
     window.speechSynthesis?.cancel();
     try { recognitionRef.current?.stop(); } catch { /* ignore */ }
+    setLiveTranscript('');
+    setTranscriptHistory([]);
     setIsSpeaking(false);
     setIsListening(false);
     setIsThinking(false);
@@ -282,6 +288,7 @@ export function useVoiceConversation(isActive: boolean) {
   return {
     turns,
     liveTranscript,
+    transcriptHistory,
     isListening,
     isSpeaking,
     isThinking,

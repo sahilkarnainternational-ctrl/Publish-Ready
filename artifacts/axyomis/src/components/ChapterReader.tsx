@@ -12,6 +12,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import mermaid from 'mermaid';
 import { useUser } from '../context/UserContext';
+import { DATA_SETS } from '../constants';
 import { loadChapter, type BookChapter } from '../services/chapterCache';
 
 mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
@@ -161,18 +162,7 @@ const fetchWiki = async (topic: string, context = ''): Promise<ChapterData | nul
 };
 
 const getRelatedTopics = (topic: string, context = ''): string[] => {
-  const DATA_SETS: Record<string, string[]> = {
-    Nature: ["Solar System","Life","Plant reproduction","Water cycle","Atmosphere of Earth","Photosynthesis","Mammal","Bird","Reptile","Amphibian","Fish","Insect"],
-    Fruits: ["Apple","Banana","Orange","Mango","Pineapple","Grapes","Watermelon","Strawberry","Blueberry","Kiwifruit","Peach","Plum","Cherry","Pear","Papaya","Pomegranate","Lemon","Coconut","Guava","Avocado"],
-    Vegetables: ["Tomato","Potato","Carrot","Broccoli","Spinach","Cabbage","Onion","Garlic","Ginger","Radish","Cucumber","Pumpkin","Eggplant","Bell pepper","Maize","Pea","Bean","Lentil","Soybean"],
-    Hygiene: ["Drinking water","Soap","Toothbrush","Toothpaste","Towel","Comb","Shampoo","Hand sanitizer","Dental floss","Nail clipper"],
-    Physics: ["Classical mechanics","Kinematics","Newton's laws of motion","Gravity","Work (physics)","Energy","Power (physics)","Momentum","Torque","Fluid mechanics","Bernoulli's principle","Thermodynamics","Entropy","Electromagnetism","Electric charge","Magnetic field","Maxwell's equations","Optics","Refraction","Diffraction","Quantum mechanics","Schr\u00f6dinger equation","Heisenberg uncertainty principle","Theory of relativity","Special relativity","Nuclear physics","Radioactivity","Astrophysics","Black hole","Cosmology","String theory"],
-    Chemistry: ["Atomic theory","Electron configuration","Periodic table","Chemical bond","Covalent bond","Ionic bond","Intermolecular force","Chemical reaction","Stoichiometry","Acid\u2013base reaction","Redox","Chemical equilibrium","Chemical kinetics","Chemical thermodynamics","Electrochemistry","Organic chemistry","Alkane","Alkene","Alcohol","Carboxylic acid","Amine","Polymer","Biochemistry","Protein","Carbohydrate","Lipid","Nucleic acid","Enzyme","Metabolism","Ideal gas law","Spectroscopy","Chromatography"],
-    Biology: ["Cell (biology)","Organelle","Cell nucleus","Mitochondrion","Chloroplast","Cell membrane","Ribosome","Lysosome","Cell cycle","Mitosis","Meiosis","Genetics","DNA","RNA","Gene","Chromosome","Mutation","Transcription (biology)","Translation (biology)","Epigenetics","Evolution","Natural selection","Phylogeny","Ecology","Ecosystem","Food web","Biome","Tree","Anatomy","Physiology","Nervous system","Cardiovascular system","Respiratory system","Endocrine system","Immune system","Botany","Photosynthesis","Microbiology","Bacteria","Virus","Fungi","CRISPR","Stem cell"],
-    Mathematics: ["Calculus","Algebra","Trigonometry","Pythagorean theorem","Euler's formula","Integral","Derivative","Linear algebra","Probability","Statistics","Differential equation","Quadratic equation","Taylor series","Fourier transform","Complex number","Matrix (mathematics)","Vector space","Logarithm"],
-    diseases: ["Malaria","Dengue fever","Tuberculosis","Cholera","Typhoid fever","HIV/AIDS","COVID-19","Influenza","Pneumonia","Measles","Rubella","Polio","Tetanus","Rabies","Leprosy","Leishmaniasis","Lymphatic filariasis","Asthma","Chronic obstructive pulmonary disease","Lung cancer","Breast cancer","Prostate cancer","Colorectal cancer","Leukemia","Lymphoma","Melanoma","Diabetes","Hypertension","Coronary artery disease","Stroke","Heart failure","Alzheimer's disease","Parkinson's disease","Epilepsy","Schizophrenia","Bipolar disorder","Osteoarthritis","Rheumatoid arthritis","Osteoporosis","Gout","Cirrhosis","Appendicitis","Crohn's disease","Celiac disease","Chronic kidney disease","Anemia","Hemophilia","Sickle cell disease","Down syndrome","Cystic fibrosis","Malnutrition","Scurvy","Rickets","Kwashiorkor","Obesity","Toxoplasmosis","Giardiasis","Amoebiasis","Ascariasis","Scabies"]
-  };
-  const all = DATA_SETS[context] || Object.values(DATA_SETS).flat();
+  const all = (context && DATA_SETS[context]) ? DATA_SETS[context] : Object.values(DATA_SETS).flat();
   const idx = all.indexOf(topic);
   if (idx < 0) return all.slice(0, 5);
   const neighbors = all.slice(Math.max(0, idx - 2), idx).concat(all.slice(idx + 1, idx + 3));
@@ -203,7 +193,15 @@ const FORMULA_MAP: Record<string, string> = {
   "Pythagorean theorem": "$$ a^2 + b^2 = c^2 $$",
   "Calculus": "$$ \\int_a^b f(x) dx = F(b) - F(a) $$"
 };
-
+const SUBTOPICS_MAP: Record<string, string[]> = {
+  'Modern Physics': ['Photoelectric effect', 'Millikan oil drop experiment', 'Semiconductor physics', 'Particle-wave duality', 'Nuclear structure'],
+  'Quantum mechanics': ['Schrödinger equation', 'Heisenberg uncertainty', 'Quantum numbers', 'Atomic orbitals', 'Quantum tunneling'],
+  'Electromagnetism': ['Coulomb’s law', 'Electric fields', 'Magnetic induction', 'Maxwell’s equations', 'AC circuits'],
+  'Thermodynamics': ['First law of thermodynamics', 'Second law of thermodynamics', 'Entropy', 'Heat engines', 'Carnot cycle'],
+  'Optics': ['Reflection', 'Refraction', 'Lens optics', 'Interference', 'Diffraction'],
+  'Atomic structure': ['Bohr model', 'Electron configuration', 'Orbital shapes', 'Spectral lines', 'Ionization energy'],
+  'Nuclear physics': ['Radioactivity', 'Half-life', 'Alpha decay', 'Beta decay', 'Nuclear fusion'],
+};
 // ─── EBOOK CHAPTER READER ───────────────────────────────────────────────
 
 export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, query, context, onNavigate }) => {
@@ -215,6 +213,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
   const [related, setRelated] = useState<RelatedTopic[]>([]);
   const [activeSection, setActiveSection] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
   const [readTime, setReadTime] = useState('3 min');
 
@@ -309,6 +308,8 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
   };
 
   const hasFormula = query && FORMULA_MAP[query];
+  const activeTitle = book?.title || data?.title || query;
+  const subtopics = SUBTOPICS_MAP[activeTitle] || [];
 
   return (
     <AnimatePresence>
@@ -377,6 +378,31 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                     Sources & Citations
                   </button>
                 </div>
+
+                <div className="mt-6 p-4 rounded-3xl bg-white/5 border border-white/10">
+                  <div className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-500 mb-3">AI Study Search</div>
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && searchQuery.trim()) { onNavigate?.(searchQuery.trim(), book?.subject || context || 'Science'); setSearchQuery(''); } }}
+                      placeholder="Ask Astra while studying"
+                      className="w-full rounded-3xl border border-white/10 bg-black/70 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    />
+                    <button
+                      onClick={() => {
+                        if (!searchQuery.trim()) return;
+                        onNavigate?.(searchQuery.trim(), book?.subject || context || 'Science');
+                        setSearchQuery('');
+                      }}
+                      className="w-full rounded-3xl bg-blue-500/80 hover:bg-blue-400 transition-all text-sm font-black uppercase tracking-[0.2em] py-3 text-black"
+                    >
+                      Search Astra
+                    </button>
+                  </div>
+                </div>
+
                 {/* Mobile sidebar close */}
                 <button
                   onClick={() => setSidebarOpen(false)}
@@ -514,6 +540,27 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                             <figcaption className="text-[9px] text-slate-600 font-mono p-2 uppercase tracking-widest">{img.caption}</figcaption>
                           </figure>
                         ))}
+                      </section>
+                    )}
+
+                    {subtopics.length > 0 && (
+                      <section id="subtopics" className="mb-14 scroll-mt-24 p-8 rounded-3xl bg-white/5 border border-white/10">
+                        <div className="flex items-center justify-between gap-3 mb-4">
+                          <h2 className="text-2xl font-bold text-white">Chapter Subtopics</h2>
+                          <span className="text-[10px] uppercase tracking-[0.25em] text-slate-500">Deep dive guide</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {subtopics.map((topic) => (
+                            <button
+                              key={topic}
+                              onClick={() => onNavigate?.(topic, book.subject)}
+                              className="text-left p-4 rounded-3xl bg-slate-950/70 border border-white/10 hover:border-blue-500/20 hover:bg-slate-900 transition-all"
+                            >
+                              <div className="text-sm font-bold text-white">{topic}</div>
+                              <p className="text-[11px] text-slate-400 mt-2">Tap to load the focused topic from this chapter.</p>
+                            </button>
+                          ))}
+                        </div>
                       </section>
                     )}
 

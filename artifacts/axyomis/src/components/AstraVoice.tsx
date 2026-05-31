@@ -19,6 +19,7 @@ function formatTime(seconds: number) {
 export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
   const {
     liveTranscript,
+    transcriptHistory,
     isListening,
     isSpeaking,
     isThinking,
@@ -130,22 +131,23 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
           </div>
           <button
             onClick={handleClose}
-            className="touch-target p-3 rounded-full bg-white/10 border border-white/15 text-white hover:bg-white/20 transition-all"
-            aria-label="Close voice session"
+            className="touch-target inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/20 transition-all"
+            aria-label="Terminate voice session and close Astra Voice"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
+            <span className="text-[11px] font-black uppercase tracking-[0.25em]">Terminate</span>
           </button>
         </div>
 
         {/* Center orb */}
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center min-h-0 px-4">
-          <div className="relative flex items-center justify-center w-full max-w-lg aspect-square max-h-[min(55vh,420px)]">
-            <GeminiGlow state={orbState} size={420} />
-            <AstraOrb state={orbState} size={280} />
+          <div className="relative flex items-center justify-center w-full max-w-[min(280px,100%)] aspect-square max-h-[min(35vh,240px)] mx-auto">
+            <GeminiGlow state={orbState} size={240} />
+            <AstraOrb state={orbState} size={170} />
           </div>
 
-          <div className="w-full max-w-md mt-2 px-4">
-            <GeminiWave state={orbState} width={360} height={56} />
+          <div className="w-full max-w-[min(280px,100%)] mt-4 px-4 mx-auto">
+            <GeminiWave state={orbState} width={260} height={48} />
           </div>
 
           {/* Status */}
@@ -167,16 +169,44 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
                   </p>
                 </motion.div>
               ) : isSpeaking ? (
-                <motion.div key="speak" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-2">
+                <motion.div key="speak" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-3 max-w-2xl">
                   <p className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-400/60">Astra is speaking</p>
-                  <p className="text-white/85 text-base sm:text-lg font-medium leading-snug line-clamp-4">{lastAssistant}</p>
+                  <div className="min-h-[6rem] flex items-center">
+                    <p className="text-white/90 text-base sm:text-lg font-medium leading-relaxed break-words text-center max-w-2xl px-4">
+                      {lastAssistant}
+                    </p>
+                  </div>
                 </motion.div>
               ) : isListening ? (
-                <motion.div key="listen" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-2">
+                <motion.div key="listen" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-3 max-w-2xl">
                   <p className="text-[10px] font-black uppercase tracking-[0.5em] text-cyan-400/60">Listening</p>
-                  <p className="text-cyan-300 text-xl sm:text-2xl font-bold italic break-words leading-tight">
-                    {liveTranscript ? `"${liveTranscript}"` : "I'm listening..."}
-                  </p>
+                  <div className="min-h-[4.5rem] flex flex-col items-center justify-center gap-2">
+                    {transcriptHistory.length > 0 ? (
+                      transcriptHistory.map((line, idx) => (
+                        <motion.p
+                          key={`${line}-${idx}`}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          transition={{ duration: 0.25, delay: idx * 0.05 }}
+                          className={`text-center max-w-xl px-4 break-words leading-relaxed ${idx === 0 ? 'text-cyan-300 text-lg sm:text-xl font-semibold' : 'text-slate-400/80 text-sm'}`}
+                          style={{ opacity: 1 - idx * 0.2 }}
+                        >
+                          {idx === 0 ? `"${liveTranscript || line}"` : line}
+                        </motion.p>
+                      ))
+                    ) : (
+                      <motion.p
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0.3, y: 4 }}
+                        transition={{ duration: 0.2 }}
+                        className="text-cyan-300 text-lg sm:text-xl font-bold italic break-words leading-relaxed text-center max-w-xl px-4"
+                      >
+                        {liveTranscript ? `"${liveTranscript}"` : "I'm listening..."}
+                      </motion.p>
+                    )}
+                  </div>
                 </motion.div>
               ) : (
                 <motion.div key="idle" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">

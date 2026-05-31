@@ -103,8 +103,8 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
         className="astra-orb-ambient"
         style={{
           background: conic,
-          filter: `blur(${isMobile ? 32 : 58}px) saturate(150%)`,
-          opacity: 0.55,
+          filter: `blur(${isMobile ? 24 : 42}px) saturate(180%)`,
+          opacity: 0.68,
         }}
       />
 
@@ -143,10 +143,10 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
           width: size * 0.62,
           height: size * 0.62,
           background: `${mesh}, ${conic}`,
-          boxShadow: `0 0 90px ${palette[0]}66, 0 0 140px ${palette[2]}44, inset 0 0 60px rgba(255,255,255,0.28)`,
+          boxShadow: `0 0 100px ${palette[0]}99, 0 0 160px ${palette[2]}66, inset 0 0 80px rgba(255,255,255,0.32)`,
         }}
       >
-        <div className="astra-orb-inner-mesh" style={{ background: `radial-gradient(circle at 60% 40%, rgba(255,255,255,0.42), transparent 22%), repeating-linear-gradient(96deg, rgba(255,255,255,0.06), rgba(255,255,255,0.06) 1px, transparent 1px, transparent 6px)` }} />
+        <div className="astra-orb-inner-mesh" style={{ background: `radial-gradient(circle at 60% 40%, rgba(255,255,255,0.48), transparent 20%), repeating-linear-gradient(96deg, rgba(255,255,255,0.08), rgba(255,255,255,0.08) 1px, transparent 1px, transparent 6px)` }} />
       </div>
 
       <motion.div
