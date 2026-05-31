@@ -6,6 +6,8 @@ export interface BookChapter {
   topic: string;
   subject: string;
   classLevel: string;
+  curriculum?: string;
+  country?: string;
   introduction: string;
   context: string;
   explanation: string;
@@ -24,16 +26,18 @@ function normalizeKey(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 }
 
-export function chapterCacheId(topic: string, subject: string, classLevel: string) {
-  return `${normalizeKey(topic)}__${normalizeKey(subject)}__${normalizeKey(classLevel)}`;
+export function chapterCacheId(topic: string, subject: string, classLevel: string, curriculum = '') {
+  const baseId = `${normalizeKey(topic)}__${normalizeKey(subject)}__${normalizeKey(classLevel)}`;
+  return curriculum ? `${baseId}__${normalizeKey(curriculum)}` : baseId;
 }
 
 export async function getCachedChapter(
   topic: string,
   subject: string,
-  classLevel: string
+  classLevel: string,
+  curriculum = ''
 ): Promise<BookChapter | null> {
-  const id = chapterCacheId(topic, subject, classLevel);
+  const id = chapterCacheId(topic, subject, classLevel, curriculum);
   const localKey = `axyomis_chapter_${id}`;
   try {
     const local = sessionStorage.getItem(localKey);
@@ -56,7 +60,7 @@ export async function getCachedChapter(
 }
 
 export async function saveCachedChapter(chapter: BookChapter) {
-  const id = chapterCacheId(chapter.topic, chapter.subject, chapter.classLevel);
+  const id = chapterCacheId(chapter.topic, chapter.subject, chapter.classLevel, chapter.curriculum);
   const localKey = `axyomis_chapter_${id}`;
   sessionStorage.setItem(localKey, JSON.stringify(chapter));
   try {
@@ -70,16 +74,18 @@ export async function loadChapter(
   topic: string,
   subject: string,
   classLevel: string,
-  age?: number | null
+  age?: number | null,
+  curriculum?: string | null,
+  country?: string | null
 ): Promise<BookChapter> {
-  const cached = await getCachedChapter(topic, subject, classLevel);
+  const cached = await getCachedChapter(topic, subject, classLevel, curriculum || '');
   if (cached) return cached;
 
   const [chapterRes, imagesRes] = await Promise.all([
     fetch('/api/chapter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ topic, subject, classLevel, age }),
+      body: JSON.stringify({ topic, subject, classLevel, age, curriculum, country }),
     }),
     fetch(`/api/chapter-images?topic=${encodeURIComponent(topic)}`),
   ]);

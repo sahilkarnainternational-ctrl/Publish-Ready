@@ -207,7 +207,7 @@ const FORMULA_MAP: Record<string, string> = {
 // ─── EBOOK CHAPTER READER ───────────────────────────────────────────────
 
 export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, query, context, onNavigate }) => {
-  const { classLevel, studentAge } = useUser();
+  const { classLevel, studentAge, studentProfile } = useUser();
   const [data, setData] = useState<ChapterData | null>(null);
   const [book, setBook] = useState<BookChapter | null>(null);
   const [loading, setLoading] = useState(false);
@@ -237,13 +237,17 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
 
     const subject = context || 'Science';
     const grade = classLevel || 'Grade 10';
+    const curriculum = studentProfile?.curriculum || 'International';
+    const country = studentProfile?.country || '';
 
-    loadChapter(query, subject, grade, studentAge)
+    setLoadPhase(`Loading ${curriculum}-aligned chapter...`);
+
+    loadChapter(query, subject, grade, studentAge, curriculum, country)
       .then((chapter) => {
         setBook(chapter);
-        const wordCount = [chapter.introduction, chapter.explanation, chapter.examples].join(' ').split(/\s+/).length;
-        setReadTime(`${Math.max(3, Math.ceil(wordCount / 180))} min read`);
-        setRelated((chapter.relatedTopics || []).map(t => ({ title: t, icon: getSubjectIcon(subject) })));
+        const wordCount = [chapter.introduction, chapter.context, chapter.explanation, chapter.examples, chapter.conclusion].join(' ').split(/\s+/).length;
+        setReadTime(`${Math.max(4, Math.ceil(wordCount / 180))} min read`);
+        setRelated((chapter.relatedTopics?.length ? chapter.relatedTopics : getRelatedTopics(query, context)).map(t => ({ title: t, icon: getSubjectIcon(subject) })));
         setLoading(false);
       })
       .catch(() => {
@@ -259,7 +263,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
         const relatedTitles = getRelatedTopics(query, context);
         setRelated(relatedTitles.map(t => ({ title: t, icon: getSubjectIcon(context || 'Science') })));
       });
-  }, [isOpen, query, context, classLevel, studentAge]);
+  }, [isOpen, query, context, classLevel, studentAge, studentProfile]);
 
   // Close on Escape
   useEffect(() => {
@@ -465,7 +469,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                       <div className="flex items-center gap-3 mb-6">
                         <span className="px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-black uppercase tracking-widest text-blue-400">
                           <i className={`fas ${getSubjectIcon(book.subject)} mr-1.5`} />
-                          {book.subject} · {book.classLevel}
+                          {book.subject} · {book.classLevel}{book.curriculum ? ` · ${book.curriculum}` : ''}
                         </span>
                         <span className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono uppercase tracking-widest">
                           <Clock className="w-3 h-3" />{readTime}

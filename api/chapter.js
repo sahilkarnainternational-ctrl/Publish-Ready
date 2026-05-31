@@ -13,7 +13,7 @@ function classProfile(classLevel = 'Grade 10') {
   if (grade <= 8) {
     return {
       depth: 'middle',
-      words: '1000-1400',
+      words: '1200-1700',
       math: 'include basic formulas with step-by-step examples',
       sections: 'introduction, context, core explanation, worked example, summary, conclusion',
     };
@@ -21,7 +21,7 @@ function classProfile(classLevel = 'Grade 10') {
   if (grade <= 10) {
     return {
       depth: 'high',
-      words: '1400-2000',
+      words: '1800-2400',
       math: 'include formulas, derivations where useful, exam-style examples',
       sections: 'introduction, context, detailed explanation, formulas, worked examples, applications, summary, conclusion',
     };
@@ -33,6 +33,16 @@ function classProfile(classLevel = 'Grade 10') {
     sections: 'introduction, prerequisites, theory, derivations, formulas, examples, applications, summary, conclusion',
   };
 }
+
+const CURRICULUM_GUIDANCE = {
+  Nepal: 'Nepal Education Board (NEB) / CDC Nepal curriculum. Align to Nepali secondary science and mathematics standards with examples from local textbooks and exam-style practice.',
+  India: 'CBSE/NCERT curriculum. Align to NCERT textbook style, include CBSE examination examples and clear step-by-step solutions.',
+  USA: 'US Common Core and standard high school STEM framework. Align to Common Core learning goals and AP-level clarity when relevant.',
+  UK: 'UK National Curriculum, GCSE/A-level style. Reference AQA, Edexcel, or OCR exam conventions and provide crisp conceptual clarity.',
+  Australia: 'Australian Curriculum (ACARA). Align to ACARA outcomes with Australian examples and strong scientific reasoning.',
+  Canada: 'Canadian provincial high school curriculum. Focus on strong conceptual mastery, practical examples, and exam-ready guidance.',
+  International: 'A rigorous international curriculum standard. Use clear global examples and strong conceptual scaffolding for a worldwide audience.',
+};
 
 async function fetchWikiText(topic) {
   try {
@@ -70,7 +80,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { topic, subject = 'Science', classLevel = 'Grade 10', age } = req.body;
+    const { topic, subject = 'Science', classLevel = 'Grade 10', age, curriculum = 'International', country = '' } = req.body;
     if (!topic?.trim()) {
       res.status(400).json({ error: 'topic is required' });
       return;
@@ -84,11 +94,15 @@ export default async function handler(req, res) {
 
     const wiki = await fetchWikiText(topic.trim());
     const profile = classProfile(classLevel);
+    const targetCurriculum = curriculum || country || 'International';
+    const curriculumInstructions = CURRICULUM_GUIDANCE[targetCurriculum] || CURRICULUM_GUIDANCE.International;
 
     const systemPrompt = `You are an expert ${subject} textbook author writing for ${classLevel}${age ? ` (age ${age})` : ''}.
 Create a complete structured textbook chapter in Markdown. Depth: ${profile.depth}. Target length: ${profile.words} words.
 Include where appropriate: ${profile.sections}. Math: ${profile.math}.
-Use ## headings for each major section. Include a mermaid flowchart code block if the topic benefits from a diagram.
+Use at least two curriculum-aligned visual aids, include a mermaid flowchart code block if the topic benefits from a diagram, and add exam-ready examples and application notes.
+Use ## headings for each major section.
+Align the chapter to the following curriculum guidance: ${curriculumInstructions}
 Return ONLY valid JSON with this exact shape:
 {
   "title": "string",
@@ -98,7 +112,7 @@ Return ONLY valid JSON with this exact shape:
   "formulas": "markdown string with LaTeX $...$ or empty string",
   "examples": "markdown string",
   "diagramMermaid": "mermaid flowchart code without fences or empty string",
-  "summary": ["bullet 1", "bullet 2", "bullet 3"],
+  "summary": ["bullet 1", "bullet 2", "bullet 3", "bullet 4"],
   "conclusion": "markdown string",
   "relatedTopics": ["topic1", "topic2", "topic3"]
 }`;
@@ -106,6 +120,8 @@ Return ONLY valid JSON with this exact shape:
     const userPrompt = `Topic: "${topic.trim()}"
 Subject: ${subject}
 Class: ${classLevel}
+Curriculum: ${targetCurriculum}
+Country: ${country || 'Global'}
 Wikipedia reference (use as factual base, rewrite for the student's level):
 Title: ${wiki.title}
 ${wiki.extract.slice(0, 6000)}`;
@@ -160,6 +176,8 @@ ${wiki.extract.slice(0, 6000)}`;
       subject,
       classLevel,
       topic: topic.trim(),
+      curriculum: targetCurriculum,
+      country,
       wikiUrl: `https://en.wikipedia.org/wiki/${encodeURIComponent(wiki.title.replace(/ /g, '_'))}`,
       generatedAt: new Date().toISOString(),
     });
