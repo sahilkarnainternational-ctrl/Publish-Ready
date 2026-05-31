@@ -1,15 +1,37 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   BookOpen, X, ChevronLeft, ChevronRight, ExternalLink, Play,
   Layers, Sparkles, Info, Quote, Lightbulb, Brain, Clock,
-  ArrowRight, Bookmark, Share2, FileText
+  ArrowRight, Bookmark, Share2, FileText, ListChecks
 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import mermaid from 'mermaid';
+import { useUser } from '../context/UserContext';
+import { loadChapter, type BookChapter } from '../services/chapterCache';
+
+mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+
+const MermaidDiagram: React.FC<{ chart: string }> = ({ chart }) => {
+  const [svg, setSvg] = useState('');
+  const id = useId().replace(/:/g, '');
+  useEffect(() => {
+    if (!chart?.trim()) return;
+    let code = chart.trim();
+    if (!code.startsWith('graph') && !code.startsWith('flowchart')) code = 'flowchart TD\n' + code;
+    mermaid.render(`chapter-mermaid-${id}`, code).then(({ svg }) => setSvg(svg)).catch(() => setSvg(''));
+  }, [chart, id]);
+  if (!svg) return null;
+  return (
+    <div className="my-10 p-8 bg-black/40 rounded-3xl border border-white/5 overflow-x-auto">
+      <div className="flex justify-center" dangerouslySetInnerHTML={{ __html: svg }} />
+    </div>
+  );
+};
 
 interface ChapterData {
   title: string;
@@ -171,40 +193,59 @@ const FORMULA_MAP: Record<string, string> = {
 // ─── EBOOK CHAPTER READER ───────────────────────────────────────────────
 
 export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, query, context, onNavigate }) => {
+  const { classLevel, studentAge } = useUser();
   const [data, setData] = useState<ChapterData | null>(null);
+  const [book, setBook] = useState<BookChapter | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadPhase, setLoadPhase] = useState('Loading chapter...');
   const [related, setRelated] = useState<RelatedTopic[]>([]);
   const [activeSection, setActiveSection] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [readTime, setReadTime] = useState('3 min');
 
+  const mdComponents = {
+    h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-2xl font-bold text-white mt-16 mb-6 pb-3 border-b border-white/10 tracking-tight">{children}</h2>,
+    h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-xl font-semibold text-white mt-10 mb-4 tracking-tight">{children}</h3>,
+    p: ({ children }: { children?: React.ReactNode }) => <p className="mb-5 leading-[1.85] text-slate-300">{children}</p>,
+    ul: ({ children }: { children?: React.ReactNode }) => <ul className="space-y-2 my-6 ml-4">{children}</ul>,
+    li: ({ children }: { children?: React.ReactNode }) => <li className="flex items-start gap-3"><span className="w-1 h-1 rounded-full bg-blue-500 mt-2.5 shrink-0" /><span>{children}</span></li>,
+    a: ({ children, href }: { children?: React.ReactNode; href?: string }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-4">{children}</a>,
+  };
+
   useEffect(() => {
     if (!isOpen || !query) return;
     setLoading(true);
     setData(null);
+    setBook(null);
     setRelated([]);
+    setLoadPhase('Checking cache...');
 
-    fetchWiki(query, context).then(d => {
-      setData(d);
-      if (d?.extract) {
-        const words = d.extract.replace(/<[^>]+>/g, '').split(/\s+/).length;
-        setReadTime(`${Math.max(2, Math.ceil(words / 200))} min read`);
-      }
-      setLoading(false);
-    });
+    const subject = context || 'Science';
+    const grade = classLevel || 'Grade 10';
 
-    const relatedTitles = getRelatedTopics(query, context);
-    setRelated(relatedTitles.map(t => ({ title: t, icon: getSubjectIcon(context || 'Science') })));
-
-    // Prefetch related images
-    relatedTitles.forEach(async t => {
-      const rd = await fetchWiki(t, context);
-      if (rd?.imgSrc) {
-        setRelated(prev => prev.map(r => r.title === t ? { ...r, imgSrc: rd.imgSrc } : r));
-      }
-    });
-  }, [isOpen, query, context]);
+    loadChapter(query, subject, grade, studentAge)
+      .then((chapter) => {
+        setBook(chapter);
+        const wordCount = [chapter.introduction, chapter.explanation, chapter.examples].join(' ').split(/\s+/).length;
+        setReadTime(`${Math.max(3, Math.ceil(wordCount / 180))} min read`);
+        setRelated((chapter.relatedTopics || []).map(t => ({ title: t, icon: getSubjectIcon(subject) })));
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoadPhase('Loading from Wikipedia...');
+        fetchWiki(query, context).then(d => {
+          setData(d);
+          if (d?.extract) {
+            const words = d.extract.replace(/<[^>]+>/g, '').split(/\s+/).length;
+            setReadTime(`${Math.max(2, Math.ceil(words / 200))} min read`);
+          }
+          setLoading(false);
+        });
+        const relatedTitles = getRelatedTopics(query, context);
+        setRelated(relatedTitles.map(t => ({ title: t, icon: getSubjectIcon(context || 'Science') })));
+      });
+  }, [isOpen, query, context, classLevel, studentAge]);
 
   // Close on Escape
   useEffect(() => {
@@ -221,6 +262,18 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
   }, [isOpen]);
 
   const sections = React.useMemo(() => {
+    if (book) {
+      return [
+        { id: 'introduction', title: 'Introduction' },
+        { id: 'context', title: 'Context' },
+        { id: 'explanation', title: 'Explanation' },
+        ...(book.formulas ? [{ id: 'formulas', title: 'Formulas' }] : []),
+        { id: 'examples', title: 'Examples' },
+        ...(book.diagramMermaid ? [{ id: 'diagram', title: 'Diagram' }] : []),
+        { id: 'summary', title: 'Summary' },
+        { id: 'conclusion', title: 'Conclusion' },
+      ];
+    }
     if (!data?.extract) return [];
     return data.extract
       .split(/\n\n+/)
@@ -228,7 +281,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
       .filter((p) => p.length > 0 && p.length < 100)
       .slice(1, 9)
       .map((title, i) => ({ id: `section-${i}`, title, level: 3 }));
-  }, [data]);
+  }, [data, book]);
 
   const scrollToSection = (id: string) => {
     setActiveSection(id);
@@ -264,11 +317,12 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                     <BookOpen className="w-5 h-5 text-blue-500" />
                     <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Chapter Index</span>
                   </div>
-                  <h3 className="text-white font-bold text-sm leading-tight line-clamp-2">{query}</h3>
-                  {context && (
+                  <h3 className="text-white font-bold text-sm leading-tight line-clamp-2">{book?.title || data?.title || query}</h3>
+                  {(context || book?.subject) && (
                     <span className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[9px] font-black uppercase tracking-widest text-blue-400">
-                      <i className={`fas ${getSubjectIcon(context)} text-[9px]`} />
-                      {context}
+                      <i className={`fas ${getSubjectIcon(context || book?.subject || 'Science')} text-[9px]`} />
+                      {context || book?.subject}
+                      {book?.classLevel && ` · ${book.classLevel}`}
                     </span>
                   )}
                 </div>
@@ -283,12 +337,12 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                     <button
                       key={s.id}
                       onClick={() => scrollToSection(s.id)}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all ${activeSection === s.id ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'text-slate-400 hover:bg-white/[0.03] hover:text-white'} ${s.level >= 3 ? 'pl-6 text-[11px] opacity-70' : ''}`}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all ${activeSection === s.id ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'text-slate-400 hover:bg-white/[0.03] hover:text-white'}`}
                     >
                       {s.title}
                     </button>
                   ))}
-                  {hasFormula && (
+                  {!book && hasFormula && (
                     <button
                       onClick={() => scrollToSection('formula')}
                       className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${activeSection === 'formula' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'text-slate-400 hover:bg-white/[0.03] hover:text-white'}`}
@@ -344,6 +398,11 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                     <ExternalLink className="w-4 h-4" />
                   </a>
                 )}
+                {book?.wikiUrl && (
+                  <a href={book.wikiUrl} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all" title="Wikipedia source">
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
                 <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all">
                   <X className="w-4 h-4" />
                 </button>
@@ -377,16 +436,103 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                       className="w-12 h-12 border-2 border-blue-500 border-t-transparent rounded-full"
                     />
                     <div className="space-y-2 text-center">
-                      <p className="text-white font-bold text-sm tracking-widest uppercase">Loading Chapter</p>
-                      <p className="text-slate-600 text-[10px] font-mono uppercase tracking-widest">Accessing encrypted archives...</p>
+                      <p className="text-white font-bold text-sm tracking-widest uppercase">{book ? 'Generating Textbook Chapter' : 'Loading Chapter'}</p>
+                      <p className="text-slate-600 text-[10px] font-mono uppercase tracking-widest">{loadPhase}</p>
                     </div>
                   </div>
-                ) : !data ? (
+                ) : !data && !book ? (
                   <div className="text-center py-32">
                     <Info className="w-10 h-10 text-slate-700 mx-auto mb-4" />
                     <p className="text-slate-500 text-sm">No data found for this topic.</p>
                   </div>
-                ) : (
+                ) : book ? (
+                  <>
+                    <div id="overview" className="mb-16">
+                      <div className="flex items-center gap-3 mb-6">
+                        <span className="px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-black uppercase tracking-widest text-blue-400">
+                          <i className={`fas ${getSubjectIcon(book.subject)} mr-1.5`} />
+                          {book.subject} · {book.classLevel}
+                        </span>
+                        <span className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono uppercase tracking-widest">
+                          <Clock className="w-3 h-3" />{readTime}
+                        </span>
+                      </div>
+                      <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-[1.1] mb-6">{book.title}</h1>
+                      {book.images?.[0] && (
+                        <div className="mt-8 rounded-2xl overflow-hidden border border-white/5">
+                          <img src={book.images[0].url} alt={book.images[0].caption} className="w-full max-h-[380px] object-cover" />
+                          <p className="text-[9px] text-slate-600 font-mono uppercase tracking-widest p-3 bg-black/40">{book.images[0].caption} · {book.images[0].license || 'Wikimedia Commons'}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {[
+                      { id: 'introduction', title: 'Introduction', body: book.introduction },
+                      { id: 'context', title: 'Context', body: book.context },
+                      { id: 'explanation', title: 'Explanation', body: book.explanation },
+                      { id: 'formulas', title: 'Formulas & Equations', body: book.formulas },
+                      { id: 'examples', title: 'Worked Examples', body: book.examples },
+                    ].filter(s => s.body?.trim()).map((section) => (
+                      <section key={section.id} id={section.id} className="mb-14 scroll-mt-24">
+                        <h2 className="text-2xl font-bold text-white mb-6 pb-3 border-b border-white/10">{section.title}</h2>
+                        <div className="text-slate-300 leading-[1.85] text-[15px]">
+                          <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={mdComponents}>{section.body}</Markdown>
+                        </div>
+                      </section>
+                    ))}
+
+                    {book.diagramMermaid && (
+                      <section id="diagram" className="mb-14 scroll-mt-24">
+                        <h2 className="text-2xl font-bold text-white mb-6 pb-3 border-b border-white/10">Concept Flow</h2>
+                        <MermaidDiagram chart={book.diagramMermaid} />
+                      </section>
+                    )}
+
+                    {book.images && book.images.length > 1 && (
+                      <section className="mb-14 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {book.images.slice(1).map((img, i) => (
+                          <figure key={i} className="rounded-xl overflow-hidden border border-white/5">
+                            <img src={img.url} alt={img.caption} className="w-full h-40 object-cover" />
+                            <figcaption className="text-[9px] text-slate-600 font-mono p-2 uppercase tracking-widest">{img.caption}</figcaption>
+                          </figure>
+                        ))}
+                      </section>
+                    )}
+
+                    <section id="summary" className="mb-14 scroll-mt-24 p-8 rounded-3xl bg-blue-500/[0.04] border border-blue-500/10">
+                      <div className="flex items-center gap-2 mb-4 text-blue-400">
+                        <ListChecks className="w-4 h-4" />
+                        <h2 className="text-lg font-black uppercase tracking-widest text-[10px]">Chapter Summary</h2>
+                      </div>
+                      <ul className="space-y-3">
+                        {(book.summary || []).map((item, i) => (
+                          <li key={i} className="flex items-start gap-3 text-slate-300 text-sm">
+                            <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 text-[10px] font-black flex items-center justify-center shrink-0">{i + 1}</span>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+
+                    <section id="conclusion" className="mb-14 scroll-mt-24">
+                      <h2 className="text-2xl font-bold text-white mb-6 pb-3 border-b border-white/10">Conclusion</h2>
+                      <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={mdComponents}>{book.conclusion}</Markdown>
+                    </section>
+
+                    {related.length > 0 && (
+                      <div className="mt-12">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-4">Related Chapters</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {related.map((r) => (
+                            <button key={r.title} onClick={() => onNavigate?.(r.title, book.subject)} className="text-left p-4 rounded-xl border border-white/5 hover:border-white/15 bg-white/[0.02] text-sm text-slate-300 hover:text-white transition-all">
+                              {r.title}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : data ? (
                   <>
                     {/* ── Chapter Header ── */}
                     <div id="overview" className="mb-16">
@@ -600,7 +746,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                     {/* Bottom spacing */}
                     <div className="h-24" />
                   </>
-                )}
+                ) : null}
               </div>
             </div>
           </div>

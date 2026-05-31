@@ -9,6 +9,7 @@ import { QuizSection } from './components/QuizSection';
 import { GlobalPopups } from './components/Popups';
 import { Profile } from './components/Profile';
 import { PremiumSection } from './components/PremiumSection';
+import { CoursesSection } from './components/CoursesSection';
 import { AITutor } from './components/AITutor';
 import { StudyPlan } from './components/StudyPlan';
 import { StudyAnalytics } from './components/StudyAnalytics';
@@ -611,6 +612,9 @@ export default function App() {
 
       {/* PARENT REPORT SECTION */}
       <ParentReport />
+
+      {/* CORE COURSES */}
+      <CoursesSection onOpenChapter={(topic, subject) => openReader(topic, subject)} />
 
       {/* PREMIUM SECTION */}
       <PremiumSection />

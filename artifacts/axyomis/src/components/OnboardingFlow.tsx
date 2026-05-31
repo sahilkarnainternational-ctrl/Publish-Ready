@@ -39,6 +39,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ isOpen, onClose 
   const [saving, setSaving] = useState(false);
 
   const [selectedClass, setSelectedClass] = useState<ClassLevel | null>(null);
+  const [studentAge, setStudentAge] = useState(12);
   const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>([]);
 
   const [studentName, setStudentName] = useState('');
@@ -72,6 +73,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ isOpen, onClose 
     const studentProfile: StudentProfile = {};
     if (studentName) studentProfile.studentName = studentName;
     if (dateOfBirth) studentProfile.dateOfBirth = dateOfBirth;
+    if (studentAge) studentProfile.age = studentAge;
     if (country) studentProfile.country = country;
     studentProfile.curriculum = country;
 
@@ -180,6 +182,22 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ isOpen, onClose 
                         </div>
                       </div>
                     ))}
+                  </div>
+
+                  <div className="mt-6 p-4 rounded-2xl border border-white/10 bg-white/[0.02]">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[11px] font-bold text-white">Your age</span>
+                      <span className="text-cyan-400 font-black text-lg">{studentAge}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={5}
+                      max={22}
+                      value={studentAge}
+                      onChange={(e) => setStudentAge(Number(e.target.value))}
+                      className="w-full accent-cyan-500"
+                    />
+                    <p className="text-[9px] text-slate-500 mt-2">Content depth adapts to your age and class together.</p>
                   </div>
                 </motion.div>
               )}

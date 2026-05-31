@@ -596,12 +596,23 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
       if (!audioContextRef.current) {
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
+      if (audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume().catch(() => {});
+      }
       setIsConversationMode(true);
       setConversationTimeLeft(30 * 60);
-      generateVoice("Conversation mode initialized. Astra is ready for neural dialogue. This link will remain active for thirty minutes.");
+      generateVoiceRef.current(
+        "Hi! I'm Astra. I'm ready for a voice conversation. Just speak when you're ready.",
+        false,
+        () => scheduleConversationListeningRef.current(600)
+      );
     } else {
       setIsConversationMode(false);
       stopCurrentAudio();
+      if (listeningRestartTimerRef.current) {
+        clearTimeout(listeningRestartTimerRef.current);
+        listeningRestartTimerRef.current = null;
+      }
       recognitionRef.current?.stop();
       if (conversationTimerRef.current) {
         clearInterval(conversationTimerRef.current);
@@ -691,6 +702,38 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
 
   const [isAstraSpeaking, setIsAstraSpeaking] = useState(false);
 
+  const isConversationModeRef = useRef(false);
+  const isAstraSpeakingRef = useRef(false);
+  const isAnalyzingRef = useRef(false);
+  const isLoadingRef = useRef(false);
+  const isListeningRef = useRef(false);
+  const handleSendRef = useRef<(manualInput?: string) => void>(() => {});
+  const generateVoiceRef = useRef<(text: string, robotic?: boolean, onEnded?: () => void) => void>(() => {});
+  const scheduleConversationListeningRef = useRef<(delayMs?: number) => void>(() => {});
+  const listeningRestartTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const preferredVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
+
+  useEffect(() => { isConversationModeRef.current = isConversationMode; }, [isConversationMode]);
+  useEffect(() => { isAstraSpeakingRef.current = isAstraSpeaking; }, [isAstraSpeaking]);
+  useEffect(() => { isAnalyzingRef.current = isAnalyzing; }, [isAnalyzing]);
+  useEffect(() => { isLoadingRef.current = isLoading; }, [isLoading]);
+  useEffect(() => { isListeningRef.current = isListening; }, [isListening]);
+
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = window.speechSynthesis?.getVoices() || [];
+      preferredVoiceRef.current =
+        voices.find(v => v.name.toLowerCase().includes('samantha')) ||
+        voices.find(v => v.name.toLowerCase().includes('google uk english female')) ||
+        voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female')) ||
+        voices.find(v => v.lang.startsWith('en')) ||
+        null;
+    };
+    loadVoices();
+    window.speechSynthesis?.addEventListener('voiceschanged', loadVoices);
+    return () => window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices);
+  }, []);
+
   // Web Speech API TTS ref
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
 
@@ -773,6 +816,26 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
 
   const inputRef = useRef('');
 
+  const scheduleConversationListening = (delayMs = 400) => {
+    if (listeningRestartTimerRef.current) clearTimeout(listeningRestartTimerRef.current);
+    listeningRestartTimerRef.current = setTimeout(() => {
+      if (!isConversationModeRef.current) return;
+      if (isAstraSpeakingRef.current || isAnalyzingRef.current || isLoadingRef.current || isListeningRef.current) return;
+      try {
+        if (!audioContextRef.current) {
+          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
+        if (audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume().catch(() => {});
+        }
+        recognitionRef.current?.start();
+      } catch (e) {
+        console.warn('Could not restart mic', e);
+      }
+    }, delayMs);
+  };
+  scheduleConversationListeningRef.current = scheduleConversationListening;
+
   // Initialize Speech Recognition
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -784,6 +847,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
 
       recognition.onstart = () => {
         setIsListening(true);
+        isListeningRef.current = true;
         playUISound('listen_start');
       };
       recognition.onresult = (event: any) => {
@@ -793,25 +857,27 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
       };
       recognition.onend = () => {
         setIsListening(false);
+        isListeningRef.current = false;
         playUISound('listen_stop');
-        if (isConversationMode) {
-          if (inputRef.current) {
-            handleSend(inputRef.current);
-            inputRef.current = '';
-            setInput('');
-          } else if (!isAstraSpeaking && !isAnalyzing) {
-            // Keep listening in conversation mode if idle
-            setTimeout(() => {
-              if (isConversationMode && !isListening && !isAstraSpeaking && !isAnalyzing) {
-                try { recognitionRef.current?.start(); } catch(e) {}
-              }
-            }, 1000);
-          }
+        if (!isConversationModeRef.current) return;
+
+        const transcript = inputRef.current.trim();
+        if (transcript) {
+          const send = handleSendRef.current;
+          inputRef.current = '';
+          setInput('');
+          send(transcript);
+          return;
+        }
+
+        if (!isAstraSpeakingRef.current && !isAnalyzingRef.current && !isLoadingRef.current) {
+          scheduleConversationListeningRef.current(800);
         }
       };
       recognition.onerror = (event: any) => {
         console.error('Speech recognition error', event.error);
         setIsListening(false);
+        isListeningRef.current = false;
         if (event.error === 'not-allowed') {
           const errorMsg: Message = {
             id: generateId(),
@@ -826,12 +892,14 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
             content: "### ⚠️ System Disruption\nA network error occurred while processing your voice query. Please verify your connection and try again."
           };
           setMessages(prev => [...prev, errorMsg]);
+        } else if (isConversationModeRef.current && ['no-speech', 'aborted', 'audio-capture'].includes(event.error)) {
+          scheduleConversationListeningRef.current(1000);
         }
       };
 
       recognitionRef.current = recognition;
     }
-  }, [isConversationMode]);
+  }, []);
 
   const toggleListening = () => {
     try {
@@ -868,31 +936,47 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
 
   // Web Speech API TTS — free, works on Android WebView + all browsers
   const generateVoice = (text: string, _isRobotic: boolean = false, onEnded?: () => void) => {
-    if ((!isVoiceOutputEnabled && !isConversationMode) || !window.speechSynthesis) {
+    if ((!isVoiceOutputEnabled && !isConversationModeRef.current) || !window.speechSynthesis) {
       if (onEnded) onEnded();
       return;
     }
     try {
       window.speechSynthesis.cancel();
       const cleanText = text.replace(/[#*`\[\]]/g, '').replace(/\[YT_SEARCH:.*?\]/gs, '').substring(0, 800);
+      if (!cleanText.trim()) {
+        setIsAstraSpeaking(false);
+        isAstraSpeakingRef.current = false;
+        if (onEnded) onEnded();
+        return;
+      }
       const utt = new SpeechSynthesisUtterance(cleanText);
       utt.rate = speakingRate;
       utt.pitch = speakingPitch;
       utt.volume = 1;
-      // Pick a nice voice if available
-      const voices = window.speechSynthesis.getVoices();
-      const preferred = voices.find(v => v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('google uk') || v.name.toLowerCase().includes('samantha'));
-      if (preferred) utt.voice = preferred;
-      utt.onstart = () => setIsAstraSpeaking(true);
-      utt.onend = () => { setIsAstraSpeaking(false); if (onEnded) onEnded(); };
-      utt.onerror = () => { setIsAstraSpeaking(false); if (onEnded) onEnded(); };
+      if (preferredVoiceRef.current) utt.voice = preferredVoiceRef.current;
+      utt.onstart = () => {
+        setIsAstraSpeaking(true);
+        isAstraSpeakingRef.current = true;
+      };
+      utt.onend = () => {
+        setIsAstraSpeaking(false);
+        isAstraSpeakingRef.current = false;
+        if (onEnded) onEnded();
+      };
+      utt.onerror = () => {
+        setIsAstraSpeaking(false);
+        isAstraSpeakingRef.current = false;
+        if (onEnded) onEnded();
+      };
       speechSynthRef.current = utt;
       window.speechSynthesis.speak(utt);
     } catch {
       setIsAstraSpeaking(false);
+      isAstraSpeakingRef.current = false;
       if (onEnded) onEnded();
     }
   };
+  generateVoiceRef.current = generateVoice;
 
   // Load history from localStorage on mount
   useEffect(() => {
@@ -1034,20 +1118,23 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    isLoadingRef.current = true;
     setIsAnalyzing(true);
+    isAnalyzingRef.current = true;
     setAnalysisPhase('Initializing Neural Core');
 
     try {
       setHasInteracted(true);
-      // Free tier gets a small processing delay to differentiate from paid tiers
-      if (effectiveTier === 'free') {
+      const inVoiceMode = isConversationModeRef.current;
+      // Free tier gets a small processing delay — skip in voice mode for responsiveness
+      if (effectiveTier === 'free' && !inVoiceMode) {
         await new Promise(resolve => setTimeout(resolve, 1800));
       }
       // Phase 1: Local Pre-processing animations
       playThinkingSound();
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, inVoiceMode ? 200 : 800));
       setAnalysisPhase('Accessing Neural Archives');
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, inVoiceMode ? 300 : 1000));
       setAnalysisPhase('Calibrating Analogies');
       
       const loadingInterval = setInterval(() => {
@@ -1095,11 +1182,16 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
 
       setMessages(prev => [...prev, assistantMessage]);
       setIsAnalyzing(false);
+      isAnalyzingRef.current = false;
       playAnswerSound();
 
       // Voice only auto-plays in conversation mode (or when explicitly enabled by user)
-      if (isConversationMode || isVoiceOutputEnabled) {
-        generateVoice(fullContent.replace(/\[YT_SEARCH:.*?\]/gs, ''), false);
+      if (inVoiceMode || isVoiceOutputEnabled) {
+        generateVoice(fullContent.replace(/\[YT_SEARCH:.*?\]/gs, ''), false, () => {
+          if (isConversationModeRef.current) {
+            scheduleConversationListeningRef.current(500);
+          }
+        });
       }
 
       let videoTopic = '';
@@ -1116,6 +1208,11 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
       const finalDisplayContent = fullContent.replace(/\[YT_SEARCH:.*?\]/gs, '').trim();
       markStreamingComplete(assistantMessage.id, finalDisplayContent);
       
+      // Skip video fetch during voice conversation for faster turn-around
+      if (inVoiceMode) {
+        return;
+      }
+
       // Fetch related videos based on content topic - IMPROVED Extraction
       try {
         if (!videoTopic) {
@@ -1147,6 +1244,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
   } catch (error: any) {
       console.error("Chatbot Error:", error);
       setIsAnalyzing(false);
+      isAnalyzingRef.current = false;
       
       let errorMessage = "Sorry, something went wrong. Please try again.";
       
@@ -1160,10 +1258,15 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
       }
 
       setMessages(prev => [...prev, { id: generateId(), role: 'assistant', content: errorMessage }]);
+      if (isConversationModeRef.current) {
+        generateVoice(errorMessage, false, () => scheduleConversationListeningRef.current(600));
+      }
     } finally {
       setIsLoading(false);
+      isLoadingRef.current = false;
     }
   };
+  handleSendRef.current = handleSend;
 
   const markStreamingComplete = (id: string, content: string) => {
     setMessages(prev => prev.map(m => m.id === id ? { ...m, content, isStreaming: false } : m));

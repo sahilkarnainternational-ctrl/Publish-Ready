@@ -18,8 +18,20 @@ export interface ParentInfo {
 export interface StudentProfile {
   studentName?: string;
   dateOfBirth?: string;
+  age?: number;
   country?: string;
   curriculum?: string;
+}
+
+function ageFromDob(dob?: string): number | null {
+  if (!dob) return null;
+  const born = new Date(dob);
+  if (Number.isNaN(born.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - born.getFullYear();
+  const m = today.getMonth() - born.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < born.getDate())) age--;
+  return age > 0 && age < 100 ? age : null;
 }
 
 export interface UserContextType {
@@ -34,6 +46,7 @@ export interface UserContextType {
   parentInfo: ParentInfo | null;
   secondaryParent: ParentInfo | null;
   studentProfile: StudentProfile | null;
+  studentAge: number | null;
   displayName: string | null;
   photoURL: string | null;
   hasCompletedOnboarding: boolean;
@@ -76,7 +89,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [photoURL, setPhotoURL] = useState<string | null>(null);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [studentAge, setStudentAgeState] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const syncStudentAge = useCallback((profile: StudentProfile | null) => {
+    if (!profile) {
+      setStudentAgeState(null);
+      return;
+    }
+    setStudentAgeState(profile.age ?? ageFromDob(profile.dateOfBirth) ?? null);
+  }, []);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -91,7 +113,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             setSubjectsState((profile as any).subjects || []);
             setParentInfoState((profile as any).parentInfo || null);
             setSecondaryParentState((profile as any).secondaryParent || null);
-            setStudentProfileState((profile as any).studentProfile || null);
+            const sp = (profile as any).studentProfile || null;
+            setStudentProfileState(sp);
+            syncStudentAge(sp);
             setHasCompletedOnboarding(!!(profile as any).classLevel);
             const tier = (profile as any).premiumTier || 'free';
             setPremiumTier(tier);
@@ -125,6 +149,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setParentInfoState(null);
         setSecondaryParentState(null);
         setStudentProfileState(null);
+        setStudentAgeState(null);
         setHasCompletedOnboarding(false);
         setPremiumTier('free');
         setIsPremium(false);
@@ -168,7 +193,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setSubjectsState(data.subjects);
     if (data.parentInfo) setParentInfoState(data.parentInfo);
     if (data.secondaryParent) setSecondaryParentState(data.secondaryParent);
-    if (data.studentProfile) setStudentProfileState(data.studentProfile);
+    if (data.studentProfile) {
+      setStudentProfileState(data.studentProfile);
+      syncStudentAge(data.studentProfile);
+    }
     setHasCompletedOnboarding(true);
     if (uid) {
       await updateUserProfile(uid, {
@@ -179,7 +207,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         ...(data.studentProfile ? { studentProfile: data.studentProfile } : {}),
       } as any);
     }
-  }, [uid]);
+  }, [uid, syncStudentAge]);
 
   const upgradeToPremium = useCallback((tier: 'scholar' | 'premium' | 'elite') => {
     setPremiumTier(tier);
@@ -191,7 +219,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   return (
     <UserContext.Provider value={{
       uid, isPremium, isTrialActive, trialDaysRemaining, premiumTier, effectiveTier,
-      classLevel, subjects, parentInfo, secondaryParent, studentProfile,
+      classLevel, subjects, parentInfo, secondaryParent, studentProfile, studentAge,
       displayName, photoURL, hasCompletedOnboarding,
       setClassLevel, setSubjects, setParentInfo, setSecondaryParent, completeOnboarding, upgradeToPremium, loading,
     }}>
