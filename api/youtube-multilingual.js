@@ -1,3 +1,5 @@
+import { cleanApiKey } from './_utils.js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -15,7 +17,7 @@ export default async function handler(req, res) {
 
   try {
     const { topic, level } = req.body;
-    const apiKey = process.env.YOUTUBE_API_KEY || process.env.VITE_YOUTUBE_API_KEY;
+    const apiKey = cleanApiKey(process.env.YOUTUBE_API_KEY || process.env.VITE_YOUTUBE_API_KEY);
 
     if (!apiKey) {
       res.status(400).json({ error: 'YouTube API Key not configured' });

@@ -1,3 +1,5 @@
+import { cleanApiKey } from './_utils.js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -20,7 +22,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    const apiKey = process.env.GROQ_API_KEY;
+    const apiKey = cleanApiKey(process.env.GROQ_API_KEY);
     if (!apiKey) {
       res.status(500).json({ error: 'GROQ_API_KEY not configured' });
       return;
@@ -60,8 +62,8 @@ RULES:
     });
 
     if (!groqRes.ok) {
-      const errBody = await groqRes.text();
-      res.status(groqRes.status).json({ error: errBody });
+      console.error('Groq API error:', groqRes.status);
+      res.status(groqRes.status).json({ error: 'AI chat service unavailable. Check GROQ_API_KEY in Vercel settings.' });
       return;
     }
 
