@@ -19,6 +19,8 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "artifacts/axyomis/src"),
         "@assets": path.resolve(__dirname, "attached_assets"),
       },
+      // Prefer TypeScript sources over stale compiled .js artifacts in src/
+      extensions: [".tsx", ".ts", ".jsx", ".js", ".json"],
       dedupe: ["react", "react-dom"],
     },
     root: path.resolve(__dirname, "artifacts/axyomis"),

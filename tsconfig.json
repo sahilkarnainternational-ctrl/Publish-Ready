@@ -7,6 +7,17 @@
     "strict": false,
     "noImplicitAny": false,
     "strictNullChecks": false,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "files": [],
+  "references": [
+    { "path": "./lib/db" },
+    { "path": "./lib/api-zod" },
+    { "path": "./lib/api-client-react" },
+    { "path": "./artifacts/axyomis" },
+    { "path": "./artifacts/api-server" },
+    { "path": "./artifacts/mockup-sandbox" },
+    { "path": "./scripts" }
+  ]
 }

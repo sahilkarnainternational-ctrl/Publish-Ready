@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "installCommand": "pnpm install",
   "buildCommand": "pnpm run vercel-build",
   "outputDirectory": "artifacts/axyomis/dist/public",
   "framework": "vite",
@@ -10,7 +11,7 @@
     { "source": "/api/send-report", "destination": "/api/send-report.js" },
     { "source": "/api/healthz", "destination": "/api/healthz.js" },
     { "source": "/api/(.*)", "destination": "/api/index.js" },
-    { "source": "/service-worker.js", "destination": "/service-worker.js" }
+    { "source": "/((?!api/|assets/|_next/|.*\\..*).*)", "destination": "/index.html" }
   ],
   "headers": [
     {

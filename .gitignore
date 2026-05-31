@@ -5,6 +5,10 @@ dist
 tmp
 out-tsc
 *.tsbuildinfo
+
+# Stale transpiled JS alongside TS/TSX sources (breaks Vite builds)
+artifacts/axyomis/src/**/*.js
+!artifacts/axyomis/public/**
 .expo
 .expo-shared
 
