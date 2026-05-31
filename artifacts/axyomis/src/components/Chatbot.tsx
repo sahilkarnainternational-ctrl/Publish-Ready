@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageSquare, Send, X, User, Sparkles, Plus, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, History, ChevronRight, LayoutGrid, Settings, HelpCircle, ThumbsUp, ThumbsDown, Activity, Cpu, ExternalLink } from 'lucide-react';
+import { MessageSquare, Send, X, User, Sparkles, Plus, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, History, ChevronRight, LayoutGrid, Settings, HelpCircle, ThumbsUp, ThumbsDown, Activity, Cpu, ExternalLink, GraduationCap } from 'lucide-react';
 import { fetchMultilingualVideos, VideoGroup, YouTubeVideo } from '../services/youtubeService';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -167,7 +167,7 @@ const YouTubeGallery: React.FC<{ videoData?: VideoGroup }> = ({ videoData }) => 
                 disabled={!videoData[l] || videoData[l].length === 0}
                 className={`capitalize px-5 py-2 rounded-xl text-xs font-black tracking-widest transition-all whitespace-nowrap ${lang === l ? 'bg-red-500 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'} ${(!videoData[l] || videoData[l].length === 0) ? 'opacity-30 cursor-not-allowed' : ''}`}
               >
-                {l}
+                {l} {videoData[l]?.length ? `(${videoData[l].length})` : ''}
               </button>
             ))}
           </div>
@@ -575,9 +575,10 @@ interface ChatbotProps {
   externalOpen?: boolean;
   hideToggle?: boolean;
   startInConversationMode?: boolean;
+  onOpenAITutor?: () => void;
 }
 
-export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, startInConversationMode, hideToggle }) => {
+export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, startInConversationMode, hideToggle, onOpenAITutor }) => {
   const { effectiveTier } = useUser();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -646,11 +647,17 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
   useEffect(() => {
     if (externalOpen !== undefined && externalOpen !== isOpen) {
       setIsOpen(externalOpen);
-      if (externalOpen && startInConversationMode) {
-        toggleConversationMode(true);
-      }
     }
-  }, [externalOpen, startInConversationMode, isOpen]);
+    if (externalOpen && startInConversationMode) {
+      toggleConversationMode(true);
+    }
+  }, [externalOpen, startInConversationMode]);
+
+  useEffect(() => {
+    if (!externalOpen && isConversationMode) {
+      toggleConversationMode(false);
+    }
+  }, [externalOpen]);
   const bootCycleRef = useRef(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() =>
     typeof window === 'undefined' ? true : !window.matchMedia('(max-width: 767px)').matches
@@ -861,7 +868,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, s
 
   // Web Speech API TTS — free, works on Android WebView + all browsers
   const generateVoice = (text: string, _isRobotic: boolean = false, onEnded?: () => void) => {
-    if (!isVoiceOutputEnabled || !window.speechSynthesis) {
+    if ((!isVoiceOutputEnabled && !isConversationMode) || !window.speechSynthesis) {
       if (onEnded) onEnded();
       return;
     }
@@ -1334,6 +1341,21 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {onOpenAITutor && (
+                    <button
+                      onClick={() => {
+                        window.speechSynthesis?.cancel();
+                        toggleConversationMode(false);
+                        setIsOpen(false);
+                        onStateChangeRef.current?.(false);
+                        onOpenAITutor();
+                      }}
+                      className="p-3 hover:bg-cyan-500/10 rounded-xl transition-all text-slate-500 hover:text-cyan-400 border border-transparent hover:border-cyan-500/20"
+                      title="Open AI Tutor"
+                    >
+                      <GraduationCap className="w-5 h-5" />
+                    </button>
+                  )}
                   <button 
                     onClick={() => setIsVoiceOutputEnabled(!isVoiceOutputEnabled)}
                     className={`p-3 rounded-xl transition-all ${isVoiceOutputEnabled ? 'text-blue-400 bg-blue-500/10' : 'text-slate-500 hover:text-white bg-white/5'}`}
@@ -1586,7 +1608,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                         </p>
                       </div>
                       <button 
-                        onClick={() => setIsConversationMode(!isConversationMode)}
+                        onClick={() => toggleConversationMode(!isConversationMode)}
                         className={`w-14 h-7 rounded-full p-1 transition-all duration-300 ${isConversationMode ? 'bg-blue-600' : 'bg-white/10'}`}
                       >
                         <motion.div 

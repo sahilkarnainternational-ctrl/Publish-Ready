@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     const params = new URLSearchParams({
       part: 'snippet',
       q: `${query} educational lecture study class`,
-      maxResults: '25',
+      maxResults: '20',
       type: 'video',
       videoEmbeddable: 'true',
       videoSyndicated: 'true',

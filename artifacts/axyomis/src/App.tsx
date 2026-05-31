@@ -111,6 +111,18 @@ export default function App() {
     if (!open) setTalkModeEnabled(false);
   }, []);
 
+  const openAITutor = useCallback(() => {
+    setIsChatOpen(false);
+    setTalkModeEnabled(false);
+    setIsAITutorOpen(true);
+  }, []);
+
+  const openChat = useCallback((conversation = false) => {
+    setIsAITutorOpen(false);
+    setTalkModeEnabled(conversation);
+    setIsChatOpen(true);
+  }, []);
+
   const openReader = useCallback((topic: string, context = '') => {
     setReaderTopic(topic);
     setReaderContext(context);
@@ -193,7 +205,7 @@ export default function App() {
           <a href="#study-hub">Sciences</a>
           <a href="#premium-section">Premium</a>
           <button
-            onClick={() => setIsAITutorOpen(true)}
+            onClick={openAITutor}
             className="px-4 py-2 bg-cyan-600/10 border border-cyan-500/30 rounded-full text-[10px] font-bold text-cyan-400 uppercase tracking-widest hover:bg-cyan-600/20 transition-all flex items-center gap-2"
           >
             <Brain className="w-3 h-3" />
@@ -264,10 +276,7 @@ export default function App() {
                 </div>
                 <div className="mt-8 flex flex-wrap gap-4 items-center justify-center sm:justify-start">
                   <button 
-                    onClick={() => {
-                      setTalkModeEnabled(true);
-                      setIsChatOpen(true);
-                    }}
+                    onClick={() => openChat(true)}
                     className="flex items-center gap-3 px-8 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white hover:bg-white/10 hover:border-blue-500/50 transition-all shadow-xl group"
                   >
                     <Volume2 className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform" />
@@ -510,7 +519,7 @@ export default function App() {
                   </button>
                 )}
                 <button
-                  onClick={() => setIsAITutorOpen(true)}
+                  onClick={openAITutor}
                   className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl text-black font-black uppercase tracking-widest text-[10px] hover:from-cyan-400 hover:to-blue-400 shadow-xl shadow-cyan-500/20 transition-all flex items-center gap-2"
                 >
                   <Brain className="w-4 h-4" /> Open AI Tutor
@@ -705,9 +714,10 @@ export default function App() {
         externalOpen={isChatOpen}
         startInConversationMode={talkModeEnabled}
         hideToggle={isAITutorOpen}
+        onOpenAITutor={openAITutor}
       />
       <Profile isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
-      <AITutor isOpen={isAITutorOpen} onClose={() => setIsAITutorOpen(false)} onOpenChat={() => { setIsAITutorOpen(false); setIsChatOpen(true); }} />
+      <AITutor isOpen={isAITutorOpen} onClose={() => setIsAITutorOpen(false)} onOpenChat={() => openChat(false)} />
       <OnboardingFlow isOpen={isOnboardingOpen} onClose={() => setIsOnboardingOpen(false)} />
       <OriginDialog 
         isOpen={isMatrixOpen} 

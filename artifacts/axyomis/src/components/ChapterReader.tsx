@@ -80,7 +80,7 @@ const fetchWiki = async (topic: string, context = ''): Promise<ChapterData | nul
       title = d.query.search[0].title;
     }
 
-    const detail = await fetch(`https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts|pageimages|images|info&inprop=url&pageids=${pageId}&exintro=0&explaintext=0&pithumbsize=1200&origin=*`);
+    const detail = await fetch(`https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts|pageimages|images|info&inprop=url&pageids=${pageId}&exintro=0&explaintext=1&exchars=15000&pithumbsize=1200&origin=*`);
     const detData = await detail.json();
     const pageData = detData.query.pages[pageId as string | number];
 
@@ -222,18 +222,12 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
 
   const sections = React.useMemo(() => {
     if (!data?.extract) return [];
-    const html = data.extract;
-    // Find h2/h3 headings in the extract to build TOC
-    const matches: { id: string; title: string; level: number }[] = [];
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    doc.querySelectorAll('h2, h3, h4').forEach((el, i) => {
-      const id = `section-${i}`;
-      el.setAttribute('id', id);
-      matches.push({ id, title: el.textContent || '', level: parseInt(el.tagName[1]) });
-    });
-    // Also inject IDs for the rendered content
-    return matches;
+    return data.extract
+      .split(/\n\n+/)
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0 && p.length < 100)
+      .slice(1, 9)
+      .map((title, i) => ({ id: `section-${i}`, title, level: 3 }));
   }, [data]);
 
   const scrollToSection = (id: string) => {
@@ -487,7 +481,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                             ),
                           }}
                         >
-                          {data.extract.replace(/<\/?h2>/g, '## ').replace(/<\/?h3>/g, '### ').replace(/<\/?p>/g, '\n\n').replace(/<br\s*\/?>/gi, '\n\n')}
+                          {data.extract.split(/\n\n+/).filter(Boolean).join('\n\n')}
                         </Markdown>
                       </div>
                     </motion.div>

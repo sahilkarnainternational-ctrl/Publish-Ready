@@ -1,5 +1,39 @@
 import { cleanApiKey } from './_utils.js';
 
+const DEVANAGARI = /[\u0900-\u097F]/;
+
+const LANG_CONFIG = {
+  english: {
+    suffix: 'educational lecture explained tutorial science',
+    relevanceLanguage: 'en',
+    regionCode: 'US',
+    filter: () => true,
+  },
+  hindi: {
+    suffix: 'hindi explain शिक्षा व्याख्या हिंदी में',
+    relevanceLanguage: 'hi',
+    regionCode: 'IN',
+    filter: (item) => DEVANAGARI.test(`${item.title} ${item.description}`) || /hindi|हिंदी/i.test(`${item.title} ${item.description}`),
+  },
+  nepali: {
+    suffix: 'nepali explain नेपाली शिक्षा व्याख्या',
+    relevanceLanguage: 'ne',
+    regionCode: 'NP',
+    filter: (item) => DEVANAGARI.test(`${item.title} ${item.description}`) && /nepali|नेपाली|nepal/i.test(`${item.title} ${item.description} ${item.channelTitle}`),
+  },
+};
+
+function mapItems(items) {
+  return items.map((item) => ({
+    id: item.id.videoId,
+    title: item.snippet.title,
+    thumbnail: item.snippet.thumbnails?.medium?.url || '',
+    channelTitle: item.snippet.channelTitle,
+    publishedAt: item.snippet.publishedAt,
+    description: item.snippet.description || '',
+  }));
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -26,38 +60,33 @@ export default async function handler(req, res) {
 
     const levelStr = level ? ` ${level} level` : '';
 
-    const fetchLang = async (langQuery) => {
+    const fetchLang = async (langKey) => {
+      const cfg = LANG_CONFIG[langKey];
       const params = new URLSearchParams({
         part: 'snippet',
-        maxResults: '8',
-        q: `${topic}${levelStr} ${langQuery} full lecture explained tutorial`,
+        maxResults: '20',
+        q: `${topic}${levelStr} ${cfg.suffix}`.trim(),
         type: 'video',
         key: apiKey,
         videoEmbeddable: 'true',
         videoSyndicated: 'true',
         safeSearch: 'strict',
         order: 'relevance',
-        videoDuration: 'medium',
-        videoCategoryId: '27',
+        relevanceLanguage: cfg.relevanceLanguage,
+        regionCode: cfg.regionCode,
       });
 
       const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
       const data = await response.json();
       const items = data.items || [];
-      return items.map((item) => ({
-        id: item.id.videoId,
-        title: item.snippet.title,
-        thumbnail: item.snippet.thumbnails?.medium?.url || '',
-        channelTitle: item.snippet.channelTitle,
-        publishedAt: item.snippet.publishedAt,
-        description: item.snippet.description || '',
-      }));
+      const mapped = mapItems(items).filter(cfg.filter);
+      return mapped.length > 0 ? mapped.slice(0, 12) : mapItems(items).slice(0, 8);
     };
 
     const [english, hindi, nepali] = await Promise.allSettled([
-      fetchLang('educational lecture study'),
-      fetchLang('शिक्षा हिंदी'),
-      fetchLang('शिक्षा नेपाली'),
+      fetchLang('english'),
+      fetchLang('hindi'),
+      fetchLang('nepali'),
     ]);
 
     res.status(200).json({

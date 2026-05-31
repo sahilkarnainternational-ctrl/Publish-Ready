@@ -220,7 +220,7 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat })
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[300] flex pointer-events-auto">
+      <div className="fixed inset-0 z-[450] flex pointer-events-auto">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -656,7 +656,7 @@ function VideoPanel({ videos, subject, chapter, classLevel }: { videos: VideoGro
         {(['english', 'hindi', 'nepali'] as const).map(l => (
           <button key={l} onClick={() => setLang(l)}
             className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${lang === l ? 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300' : 'bg-white/5 border-white/10 text-slate-500 hover:text-white'}`}>
-            {l === 'english' ? '🇬🇧 EN' : l === 'hindi' ? '🇮🇳 HI' : '🇳🇵 NP'}
+            {l === 'english' ? `🇬🇧 EN${videos?.english?.length ? ` (${videos.english.length})` : ''}` : l === 'hindi' ? `🇮🇳 HI${videos?.hindi?.length ? ` (${videos.hindi.length})` : ''}` : `🇳🇵 NP${videos?.nepali?.length ? ` (${videos.nepali.length})` : ''}`}
           </button>
         ))}
       </div>

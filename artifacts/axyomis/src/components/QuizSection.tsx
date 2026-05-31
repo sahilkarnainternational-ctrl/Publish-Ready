@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, XCircle, BrainCircuit, ChevronRight, RefreshCw, Trophy, Target, ShieldAlert, Crosshair, Atom, FlaskConical, Dna, Layers, Lock, Calculator } from 'lucide-react';
 import allQuizData from '../data/axyomis_full_quiz.json';
-import { voiceService } from '../services/voice';
 import { useUser } from '../context/UserContext';
 import { UpgradeModal } from './UpgradeModal';
 
@@ -211,7 +210,6 @@ export const QuizSection: React.FC = () => {
     setShowReport(false);
     setGameActive(true);
     setSetupPhase('none');
-    voiceService.speak(`Initializing diagnostic evaluation in ${difficulty} tier. Prepare for synchronization.`);
   };
 
   const handleOptionClick = (index: number) => {
@@ -222,9 +220,6 @@ export const QuizSection: React.FC = () => {
     const correct = index === questions[currentIndex].correct_index;
     if (correct) {
       setScore(s => s + 1);
-      voiceService.speak("Node verified. Correct deduction.");
-    } else {
-      voiceService.speak("Signal mismatch. Incorrect analysis.");
     }
     
     setSessionResults(prev => [...prev, {
