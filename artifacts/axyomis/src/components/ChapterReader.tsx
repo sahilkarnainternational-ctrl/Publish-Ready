@@ -10,12 +10,24 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import mermaid from 'mermaid';
 import { useUser } from '../context/UserContext';
 import { DATA_SETS } from '../constants';
 import { loadChapter, type BookChapter } from '../services/chapterCache';
 
-mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+
+// Mermaid is large; load dynamically when diagrams are rendered to keep initial
+// bundle sizes small.
+let _mermaidReady = false;
+const ensureMermaid = async () => {
+  if (_mermaidReady) return (await import('mermaid'))?.default || (await import('mermaid'));
+  const mod = await import('mermaid');
+  const mermaid = mod?.default || mod;
+  try {
+    mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+  } catch (e) {}
+  _mermaidReady = true;
+  return mermaid;
+};
 
 let mermaidRenderCounter = 0;
 
@@ -29,14 +41,22 @@ const MermaidDiagram: React.FC<{ chart: string }> = ({ chart }) => {
     let code = chart.trim();
     if (!code.startsWith('graph') && !code.startsWith('flowchart')) code = 'flowchart TD\n' + code;
     setError(false);
-    mermaid.render(renderId.current, code)
-      .then(({ svg: rendered }) => setSvg(rendered))
-      .catch(() => {
-        const fixed = code.replace(/\("\s*([^"]+?)\s*"\)/g, '["$1"]');
-        mermaid.render(`${renderId.current}-retry`, fixed)
-          .then(({ svg: rendered }) => setSvg(rendered))
-          .catch(() => setError(true));
-      });
+    (async () => {
+      try {
+        const mermaid = await ensureMermaid();
+        const r = await mermaid.render(renderId.current, code);
+        setSvg(r.svg);
+      } catch (e) {
+        try {
+          const mermaid = await ensureMermaid();
+          const fixed = code.replace(/\("\s*([^"']+?)\s*"\)/g, '["$1"]');
+          const r2 = await mermaid.render(`${renderId.current}-retry`, fixed);
+          setSvg(r2.svg);
+        } catch (e2) {
+          setError(true);
+        }
+      }
+    })();
   }, [chart]);
 
   if (error) return null;

@@ -7,7 +7,18 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import mermaid from 'mermaid';
+
+let _mermaidReady = false;
+const ensureMermaid = async () => {
+  if (_mermaidReady) return (await import('mermaid'))?.default || (await import('mermaid'));
+  const mod = await import('mermaid');
+  const mermaid = mod?.default || mod;
+  try {
+    mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose', fontFamily: 'Inter, sans-serif' });
+  } catch (e) {}
+  _mermaidReady = true;
+  return mermaid;
+};
 import { AstraOrb, GeminiWave, GeminiGlow, type OrbState } from './AstraOrb';
 import { useUser } from '../context/UserContext';
 
@@ -38,21 +49,14 @@ const Mermaid: React.FC<{ chart: string }> = ({ chart }) => {
 
         let finalChartToRender = processedChart;
 
+        const mermaid = await ensureMermaid();
         try {
-          // First attempt to render the unmodified (but graph-prefixed) chart
           const { svg: renderedSvg } = await mermaid.render(`mermaid-${id}-test`, processedChart);
-          // If successful, we don't need any complex regex fixes
           setSvg(renderedSvg);
           return;
         } catch (initialErr) {
-          // If the initial render fails, we apply our heuristic fixes
-          
-          // Fix invalid node quoted syntaxes like A("Text") -> A["Text"]
-          processedChart = processedChart.replace(/\("\s*([^"]+?)\s*"\)/g, '["$1"]');
-          
-          // Fix invalid edge text syntaxes like A -- "Text" --> B  ->  A -->|"Text"| B
-          processedChart = processedChart.replace(/--\s*"?([^"]+?)"?\s*-->/g, '-->|"$1"|');
-
+          processedChart = processedChart.replace(/\("\s*([^\"]+?)\s*\"\)/g, '["$1"]');
+          processedChart = processedChart.replace(/--\s*"?([^\"]+?)"?\s*-->/g, '-->|"$1"|');
           finalChartToRender = processedChart;
         }
 

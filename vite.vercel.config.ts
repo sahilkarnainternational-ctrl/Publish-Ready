@@ -30,10 +30,18 @@ export default defineConfig(({ mode }) => {
       sourcemap: false,
       rollupOptions: {
         output: {
-          manualChunks: {
-            vendor: ["react", "react-dom"],
-            firebase: ["firebase/app", "firebase/auth", "firebase/firestore"],
-            charts: ["recharts"],
+          // Use a function to split large node_modules packages into focused chunks.
+          manualChunks(id: string) {
+            if (!id.includes('node_modules')) return undefined;
+            const p = id.toLowerCase();
+            if (p.includes('firebase')) return 'firebase';
+            if (p.includes('mermaid')) return 'mermaid';
+            if (p.includes('cytoscape')) return 'cytoscape';
+            if (p.includes('recharts')) return 'charts';
+            if (p.includes('lucide-react') || p.includes('react-icons')) return 'icons';
+            if (p.match(/dagre|d3|graphlib|graphviz|layout|viz|flowchart|diagram|c4/)) return 'diagrams';
+            // default vendor bucket for other packages
+            return 'vendor';
           },
         },
       },
