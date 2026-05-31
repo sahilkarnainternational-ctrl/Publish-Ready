@@ -47,6 +47,26 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
     onClose();
   };
 
+  const trackerLabel = sessionExpired
+    ? 'Session ended'
+    : isThinking
+    ? 'Processing...'
+    : isSpeaking
+    ? 'Astra is responding'
+    : isListening
+    ? 'Listening...'
+    : 'Ready to listen';
+
+  const trackerText = sessionExpired
+    ? 'Session ended. Tap close and start a new voice link anytime — always free.'
+    : isThinking
+    ? 'Astra is building your response with deep contextual focus.'
+    : isSpeaking
+    ? lastAssistant || 'Astra is speaking — stay tuned.'
+    : isListening
+    ? liveTranscript || 'Speak naturally into your phone. Astra hears interruptions instantly.'
+    : 'Tap the mic or simply speak to begin. Interrupt Astra anytime.';
+
   if (!isOpen) return null;
 
   return (
@@ -123,7 +143,12 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Status */}
-          <div className="mt-6 text-center max-w-lg px-4 min-h-[100px]">
+          <div className="mt-6 text-center max-w-lg px-4 min-h-[120px]">
+            <div className="astra-voice-tracker" role="status" aria-live="polite">
+              <p className="astra-voice-tracker-label">{trackerLabel}</p>
+              <p className="astra-voice-tracker-text">{trackerText}</p>
+            </div>
+
             <AnimatePresence mode="wait">
               {sessionExpired ? (
                 <motion.p key="expired" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-sm font-medium">
@@ -143,7 +168,7 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
               ) : isListening ? (
                 <motion.div key="listen" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-2">
                   <p className="text-[10px] font-black uppercase tracking-[0.5em] text-cyan-400/60">Listening</p>
-                  <p className="text-cyan-300 text-xl sm:text-2xl font-bold italic">
+                  <p className="text-cyan-300 text-xl sm:text-2xl font-bold italic break-words leading-tight">
                     {liveTranscript ? `"${liveTranscript}"` : "I'm listening..."}
                   </p>
                 </motion.div>

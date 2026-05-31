@@ -90,71 +90,70 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
   }, [state, analyserRef]);
 
   const palette = STATE_PALETTE[state];
-  const conic = `conic-gradient(from 0deg, ${palette.join(', ')})`;
+  const conic = `conic-gradient(from 140deg, ${palette.join(', ')})`;
+  const mesh = `radial-gradient(circle at 20% 20%, rgba(255,255,255,0.92), transparent 18%), radial-gradient(circle at 70% 30%, rgba(255,255,255,0.18), transparent 24%), linear-gradient(135deg, rgba(34,211,238,0.22), rgba(168,85,247,0.18) 35%, rgba(236,72,153,0.12))`;
   const ringSpeed = state === 'thinking' ? 4 : state === 'speaking' ? 6 : 18;
   const innerSpeed = state === 'thinking' ? 6 : state === 'speaking' ? 8 : 22;
+  const isActive = state !== 'idle';
 
   return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      {/* Outer halo glow */}
+    <div className="astra-orb-root" style={{ width: size, height: size }}>
       <div
         ref={haloRef}
-        className="absolute inset-0 rounded-full will-change-transform"
+        className="astra-orb-ambient"
         style={{
           background: conic,
-          filter: `blur(${isMobile ? 36 : 60}px) saturate(140%)`,
-          opacity: 0.5,
-          transition: 'opacity 200ms linear',
+          filter: `blur(${isMobile ? 32 : 58}px) saturate(150%)`,
+          opacity: 0.55,
         }}
       />
-      {/* Rotating outer ring */}
+
+      {isActive && [0, 1, 2].map((index) => (
+        <motion.div
+          key={`listen-ring-${index}`}
+          initial={{ opacity: 0.6, scale: 1 }}
+          animate={{ opacity: [0.6, 0, 0.6], scale: [1, 1.6 + index * 0.14, 1] }}
+          transition={{ duration: 2.2 + index * 0.4, repeat: Infinity, ease: 'easeOut', delay: index * 0.2 }}
+          className="astra-orb-listen-ring"
+          style={{ borderColor: `rgba(34, 211, 238, ${0.14 - index * 0.03})` }}
+        />
+      ))}
+
       <motion.div
         ref={ringRef}
         animate={prefersReducedMotion ? undefined : { rotate: 360 }}
         transition={{ duration: ringSpeed, repeat: Infinity, ease: 'linear' }}
-        className="absolute inset-[-6%] rounded-full will-change-transform"
-        style={{
-          background: conic,
-          filter: 'blur(18px) saturate(160%)',
-          opacity: 0.55,
-          maskImage: 'radial-gradient(circle, transparent 56%, black 60%, black 70%, transparent 75%)',
-          WebkitMaskImage: 'radial-gradient(circle, transparent 56%, black 60%, black 70%, transparent 75%)',
-        }}
+        className="astra-orb-ring"
+        style={{ background: conic }}
       />
-      {/* Inner gradient body */}
+
       <motion.div
         animate={prefersReducedMotion ? undefined : { rotate: -360 }}
         transition={{ duration: innerSpeed, repeat: Infinity, ease: 'linear' }}
-        className="absolute inset-[12%] rounded-full"
-        style={{ background: conic, filter: 'blur(22px) saturate(180%)', opacity: 0.9 }}
+        className="astra-orb-layer"
+        style={{ background: conic }}
       />
-      {/* Core sphere */}
+
       <div
         ref={coreRef}
-        className="relative rounded-full will-change-transform"
+        className="astra-orb-core"
         style={{
           width: size * 0.62,
           height: size * 0.62,
-          background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95), rgba(255,255,255,0.25) 28%, rgba(255,255,255,0) 55%), ${conic}`,
-          filter: 'blur(2px) saturate(160%)',
-          boxShadow: `0 0 80px ${palette[0]}66, 0 0 160px ${palette[2]}44, inset 0 0 60px rgba(255,255,255,0.25)`,
-          transition: 'background 600ms linear, box-shadow 600ms linear',
+          background: `${mesh}, ${conic}`,
+          boxShadow: `0 0 90px ${palette[0]}66, 0 0 140px ${palette[2]}44, inset 0 0 60px rgba(255,255,255,0.28)`,
         }}
-      />
-      {/* Specular highlight */}
+      >
+        <div className="astra-orb-inner-mesh" style={{ background: `radial-gradient(circle at 60% 40%, rgba(255,255,255,0.42), transparent 22%), repeating-linear-gradient(96deg, rgba(255,255,255,0.06), rgba(255,255,255,0.06) 1px, transparent 1px, transparent 6px)` }} />
+      </div>
+
       <motion.div
-        animate={{ opacity: [0.6, 0.95, 0.6], scale: [1, 1.08, 1] }}
-        transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute rounded-full pointer-events-none"
-        style={{
-          width: size * 0.22, height: size * 0.22,
-          top: size * 0.22, left: size * 0.28,
-          background: 'radial-gradient(circle, rgba(255,255,255,0.9), rgba(255,255,255,0) 70%)',
-          filter: 'blur(6px)',
-        }}
+        animate={{ opacity: [0.65, 0.95, 0.65], scale: [1, 1.1, 1] }}
+        transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+        className="astra-orb-specular"
       />
-      {/* Drifting sparkles */}
-      <div className="absolute inset-0 overflow-hidden rounded-full pointer-events-none">
+
+      <div className="astra-orb-sparkles">
         {Array.from({ length: sparkleCount }).map((_, i) => {
           const angle = (i / sparkleCount) * Math.PI * 2;
           const r = size * 0.46;
@@ -162,10 +161,10 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
             <motion.div
               key={i}
               initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: [0, 0.9, 0], scale: [0, 1, 0], x: [0, Math.cos(angle) * r, 0], y: [0, Math.sin(angle) * r, 0] }}
-              transition={{ duration: 3 + (i % 5) * 0.6, repeat: Infinity, delay: i * 0.25, ease: 'easeInOut' }}
-              className="absolute left-1/2 top-1/2 w-1 h-1 rounded-full"
-              style={{ background: palette[i % palette.length], boxShadow: `0 0 8px ${palette[i % palette.length]}` }}
+              animate={{ opacity: [0, 0.85, 0], scale: [0, 0.85, 0], x: [0, Math.cos(angle) * r, 0], y: [0, Math.sin(angle) * r, 0] }}
+              transition={{ duration: 3 + (i % 5) * 0.55, repeat: Infinity, delay: i * 0.22, ease: 'easeInOut' }}
+              className="astra-orb-spark"
+              style={{ background: palette[i % palette.length], boxShadow: `0 0 10px ${palette[i % palette.length]}` }}
             />
           );
         })}

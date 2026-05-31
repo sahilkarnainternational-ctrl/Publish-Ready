@@ -55,7 +55,7 @@ export function useVoiceConversation(isActive: boolean) {
   const scheduleListen = useCallback((delay = 500) => {
     if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
     restartTimerRef.current = setTimeout(() => {
-      if (!isActiveRef.current || isSpeakingRef.current || isThinkingRef.current || isListeningRef.current) return;
+      if (!isActiveRef.current || isThinkingRef.current || isListeningRef.current) return;
       try {
         resumeAudio();
         recognitionRef.current?.start();
@@ -256,6 +256,9 @@ export function useVoiceConversation(isActive: boolean) {
 
   const startListening = useCallback(() => {
     resumeAudio();
+    window.speechSynthesis?.cancel();
+    setIsSpeaking(false);
+    isSpeakingRef.current = false;
     try {
       recognitionRef.current?.start();
     } catch { /* ignore */ }
