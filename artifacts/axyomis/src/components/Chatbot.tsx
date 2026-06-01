@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageSquare, Send, X, User, Sparkles, Plus, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, History, Menu, LayoutGrid, Settings, HelpCircle, ThumbsUp, ThumbsDown, Activity, Cpu, ExternalLink, GraduationCap } from 'lucide-react';
+import { MessageSquare, Send, X, User, Sparkles, Plus, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, History, Menu, LayoutGrid, Settings, HelpCircle, ThumbsUp, ThumbsDown, Activity, Cpu, ExternalLink, GraduationCap, ChevronRight } from 'lucide-react';
 import { fetchMultilingualVideos, VideoGroup, YouTubeVideo } from '../services/youtubeService';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -86,143 +86,20 @@ const Mermaid: React.FC<{ chart: string }> = ({ chart }) => {
         dangerouslySetInnerHTML={{ __html: svg }} 
       />
     </motion.div>
-  );
-};
 
-const GroundingSources: React.FC<{ metadata: any }> = ({ metadata }) => {
-  if (!metadata?.groundingChunks) return null;
-
-  const sources = metadata.groundingChunks
-    .map((chunk: any) => chunk.web || chunk.maps)
-    .filter(Boolean);
-
-  if (sources.length === 0) return null;
-
-  return (
-    <div className="mt-6 pt-6 border-t border-white/5 flex flex-col gap-4">
-      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-500/60">
-        <Sparkles className="w-3 h-3" />
-        Neural Source Grounding
-      </div>
-      <div className="flex flex-wrap gap-3">
-        {sources.map((source: any, i: number) => (
-          <motion.a
-            key={i}
-            href={source.uri}
-            target="_blank"
-            rel="noopener noreferrer"
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-xs text-slate-400 hover:text-blue-400 transition-all backdrop-blur-md"
-          >
-            <div className="w-1.5 h-1.5 rounded-full bg-blue-500/40" />
-            <span className="truncate max-w-[200px]">{source.title || 'Source Reference'}</span>
-            <ChevronRight className="w-3 h-3 opacity-30" />
-          </motion.a>
-        ))}
-      </div>
-    </div>
   );
 };
 
 const YouTubeGallery: React.FC<{ videoData?: VideoGroup }> = ({ videoData }) => {
-  const [lang, setLang] = useState<'english' | 'hindi' | 'nepali'>('english');
+  const [lang, setLang] = useState<string>(Object.keys(videoData || {})[0] || 'en');
   const [playingVideo, setPlayingVideo] = useState<YouTubeVideo | null>(null);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
 
-  if (!videoData) return null;
-  const hasVideos = videoData.english?.length > 0 || videoData.hindi?.length > 0 || videoData.nepali?.length > 0;
-  if (!hasVideos) return null;
-
-  const currentVideos = videoData[lang] || [];
-  const currentVideoIds = currentVideos.map(v => v.id);
+  const currentVideos = ((videoData as any)?.[lang]) || [];
+  const currentVideoIds = currentVideos.map((v: any) => v.id);
 
   return (
     <>
-      <div className="mt-10 pt-10 border-t border-white/10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-500/10 rounded-2xl flex items-center justify-center shrink-0">
-              <svg viewBox="0 0 24 24" className="w-6 h-6 fill-red-500">
-                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385-8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 4-8 4z" />
-              </svg>
-            </div>
-            <div>
-              <div className="text-[10px] font-black uppercase tracking-[0.4em] text-red-500/60">Neural Media Network</div>
-              <div className="text-sm text-white font-black uppercase tracking-widest mt-0.5">Categorized Lectures & Modules</div>
-            </div>
-          </div>
-
-          <div className="flex gap-1.5 p-1.5 bg-white/5 rounded-2xl border border-white/10 overflow-x-auto scrollbar-none">
-            {(['english', 'hindi', 'nepali'] as const).map((l) => (
-              <button
-                key={l}
-                onClick={() => setLang(l)}
-                disabled={!videoData[l] || videoData[l].length === 0}
-                className={`capitalize px-5 py-2 rounded-xl text-xs font-black tracking-widest transition-all whitespace-nowrap ${lang === l ? 'bg-red-500 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'} ${(!videoData[l] || videoData[l].length === 0) ? 'opacity-30 cursor-not-allowed' : ''}`}
-              >
-                {l} {videoData[l]?.length ? `(${videoData[l].length})` : ''}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <AnimatePresence mode="popLayout">
-          <motion.div 
-            key={lang}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {currentVideos.map((video, i) => (
-              <motion.button
-                key={video.id}
-                onClick={() => {
-                  setPlayingVideo(video);
-                  setPlaybackError(null);
-                }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="group flex flex-col bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-white/10 rounded-[32px] overflow-hidden transition-all shadow-xl text-left h-full"
-              >
-              <div className="relative aspect-video overflow-hidden bg-white/5">
-                <img 
-                  src={video.thumbnail} 
-                  alt={video.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 backdrop-blur-[2px]">
-                  <div className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center border border-white/20">
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="absolute top-3 left-3 px-2 py-1 bg-blue-500/80 backdrop-blur-md rounded-md text-[8px] font-black text-white uppercase tracking-widest">
-                  {i === 0 ? 'Core MODULE' : i < 4 ? 'Explainer' : 'Solving'}
-                </div>
-              </div>
-              <div className="p-6 flex-1 flex flex-col gap-3">
-                <h5 className="text-[12px] font-bold text-white line-clamp-2 leading-relaxed group-hover:text-blue-400 transition-colors" dangerouslySetInnerHTML={{__html: video.title}} />
-                {video.description && (
-                  <p className="text-[10px] text-slate-500 line-clamp-2 leading-relaxed opacity-60 group-hover:opacity-80 transition-opacity">
-                    {video.description}
-                  </p>
-                )}
-                <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/5">
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{video.channelTitle}</span>
-                  <ChevronRight className="w-3 h-3 text-slate-700 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            </motion.button>
-          ))}
-        </motion.div>
-      </AnimatePresence>
-      </div>
 
       <AnimatePresence>
         {playingVideo && (
@@ -348,7 +225,7 @@ const YouTubeGallery: React.FC<{ videoData?: VideoGroup }> = ({ videoData }) => 
                       </div>
                       
                       <div className="space-y-3">
-                        {currentVideos.filter(v => v.id !== playingVideo.id).slice(0, 10).map((v, idx) => (
+                        {currentVideos.filter((v: any) => v.id !== playingVideo.id).slice(0, 10).map((v: any, idx: number) => (
                           <button 
                             key={v.id}
                             onClick={() => { setPlayingVideo(v); setPlaybackError(null); }}
@@ -418,6 +295,19 @@ const NeuralStream: React.FC<{ content: string; isStreaming: boolean; groundingM
           {content}
         </Markdown>
       </div>
+    </div>
+  );
+};
+
+const GroundingSources: React.FC<{ metadata: any }> = ({ metadata }) => {
+  if (!metadata) return null;
+  return (
+    <div className="mt-3 text-[11px] text-slate-500">
+      {(metadata.sources || []).map((s: any, i: number) => (
+        <div key={i} className="flex items-center gap-2">
+          <a href={s.url || '#'} className="text-blue-400 underline text-[11px] truncate">{s.title || s.url}</a>
+        </div>
+      ))}
     </div>
   );
 };
@@ -724,6 +614,21 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
     loadVoices();
     window.speechSynthesis?.addEventListener('voiceschanged', loadVoices);
     return () => window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices);
+  }, []);
+
+  // Listen for NEURAL CORE activations triggered by the sidebar button
+  useEffect(() => {
+    const handler = () => {
+      try {
+        // Speak an intro and enter conversation mode
+        generateVoiceRef.current("Astra online. Neural Core activated. How can I assist?", false, () => {});
+        setIsConversationMode(true);
+      } catch (e) {
+        console.warn('Neural core activation failed', e);
+      }
+    };
+    window.addEventListener('neural-core-activate', handler);
+    return () => window.removeEventListener('neural-core-activate', handler);
   }, []);
 
   // Web Speech API TTS ref

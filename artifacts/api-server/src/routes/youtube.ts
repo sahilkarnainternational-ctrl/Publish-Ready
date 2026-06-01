@@ -57,7 +57,7 @@ router.post("/youtube-multilingual", async (req, res) => {
       nepali: nepali.status === "fulfilled" ? nepali.value : [],
     });
   } catch (e: any) {
-    req.log.error({ err: e }, "YouTube multilingual proxy error");
+    console.error({ err: e }, "YouTube multilingual proxy error");
     res.status(500).json({ error: "Failed to fetch YouTube videos" });
   }
 });
@@ -98,7 +98,7 @@ router.post("/youtube", async (req, res) => {
     }));
     res.json({ videos });
   } catch (e: any) {
-    req.log.error({ err: e }, "YouTube proxy error");
+    console.error({ err: e }, "YouTube proxy error");
     res.status(500).json({ error: "Failed to fetch YouTube videos" });
   }
 });
