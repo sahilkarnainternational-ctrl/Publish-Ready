@@ -22,14 +22,6 @@ const ensureMermaid = async () => {
 import { AstraOrb, GeminiWave, GeminiGlow, type OrbState } from './AstraOrb';
 import { useUser } from '../context/UserContext';
 
-// Initialize Mermaid
-mermaid.initialize({
-  startOnLoad: true,
-  theme: 'dark',
-  securityLevel: 'loose',
-  fontFamily: 'Inter, sans-serif',
-});
-
 const Mermaid: React.FC<{ chart: string }> = ({ chart }) => {
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<boolean>(false);

@@ -39,8 +39,8 @@ export default defineConfig(({ mode }) => {
             if (p.includes('cytoscape')) return 'cytoscape';
             if (p.includes('recharts')) return 'charts';
             if (p.includes('lucide-react') || p.includes('react-icons')) return 'icons';
-            if (p.match(/dagre|d3|graphlib|graphviz|layout|viz|flowchart|diagram|c4/)) return 'diagrams';
-            // default vendor bucket for other packages
+            // Avoid circular dependency with diagrams-related chunks by keeping those modules in vendor.
+            // if (p.match(/dagre|d3|graphlib|graphviz|layout|viz|flowchart|diagram|c4/)) return 'diagrams';
             return 'vendor';
           },
         },
