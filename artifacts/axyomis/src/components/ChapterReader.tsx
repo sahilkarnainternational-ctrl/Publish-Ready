@@ -233,6 +233,12 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
   const [activeSection, setActiveSection] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [visitedSections, setVisitedSections] = useState<Set<string>>(new Set(['overview']));
+  const [showYouTubePrompt, setShowYouTubePrompt] = useState(false);
+  const [promptDismissed, setPromptDismissed] = useState(false);
+  const [youtubeResults, setYoutubeResults] = useState<{ id: string; title: string; thumbnail: string }[]>([]);
+  const [youtubeLoading, setYoutubeLoading] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [readTime, setReadTime] = useState('3 min');
 
@@ -252,6 +258,11 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
     setBook(null);
     setRelated([]);
     setLoadPhase('Checking cache...');
+    setShowYouTubePrompt(false);
+    setPromptDismissed(false);
+    setYoutubeResults([]);
+    setSelectedVideo(null);
+    setVisitedSections(new Set(['overview']));
 
     const subject = context || 'Science';
     const grade = classLevel || 'Grade 10';
@@ -283,6 +294,14 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
       });
   }, [isOpen, query, context, classLevel, studentAge, studentProfile]);
 
+  useEffect(() => {
+    if (!isOpen || !query) return;
+    const trigger = /cancer|tumor|oncology|radiation|malignancy|chemotherapy/i.test(query);
+    if (trigger && !promptDismissed) {
+      setTimeout(() => setShowYouTubePrompt(true), 700);
+    }
+  }, [isOpen, query, promptDismissed]);
+
   // Close on Escape
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -296,6 +315,25 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
     else document.body.style.overflow = '';
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
+
+  const fetchYouTubeVideos = async (topic: string) => {
+    setYoutubeLoading(true);
+    setYoutubeResults([]);
+    try {
+      const resp = await fetch('/api/youtube', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: `${topic} study guide video` }),
+      });
+      const json = await resp.json();
+      if (json?.videos?.length) {
+        setYoutubeResults(json.videos.slice(0, 4));
+      }
+    } catch (e) {
+      console.warn('YouTube lookup failed', e);
+    }
+    setYoutubeLoading(false);
+  };
 
   const sections = React.useMemo(() => {
     if (book) {
@@ -321,6 +359,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
 
   const scrollToSection = (id: string) => {
     setActiveSection(id);
+    setVisitedSections((prev) => new Set(prev).add(id));
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     setSidebarOpen(false);
@@ -329,6 +368,13 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
   const hasFormula = query && FORMULA_MAP[query];
   const activeTitle = book?.title || data?.title || query;
   const subtopics = SUBTOPICS_MAP[activeTitle] || [];
+
+  const totalSections = React.useMemo(() => {
+    const count = 2 + sections.length + (hasFormula ? 1 : 0); // overview + sources + sections + formula
+    return Math.max(1, count);
+  }, [sections.length, hasFormula]);
+
+  const chapterProgress = Math.round((visitedSections.size / totalSections) * 100);
 
   return (
     <AnimatePresence>
@@ -485,12 +531,91 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                   const el = document.getElementById(allIds[i]);
                   if (el && el.offsetTop <= container.scrollTop + 120) {
                     setActiveSection(allIds[i]);
+                    setVisitedSections((prev) => new Set(prev).add(allIds[i]));
                     break;
                   }
                 }
               }}
             >
               <div className="max-w-3xl mx-auto px-6 sm:px-12 py-12 sm:py-16">
+                {showYouTubePrompt && (
+                  <div className="mb-10 rounded-[36px] border border-white/10 bg-[#08111c]/95 p-6 shadow-[0_30px_80px_rgba(12,35,61,0.55)] backdrop-blur-2xl">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-[9px] uppercase tracking-[0.35em] text-cyan-400 font-black mb-2">Learning Companion</p>
+                        <h2 className="text-xl sm:text-2xl font-black text-white">Want a YouTube video guide for this chapter?</h2>
+                        <p className="mt-2 text-slate-400 text-sm leading-relaxed">Astra can surface targeted study videos to reinforce your reading. Watch precise, curriculum-friendly explanations right here.</p>
+                      </div>
+                      <div className="flex flex-wrap gap-3 justify-end">
+                        <button
+                          onClick={() => {
+                            setShowYouTubePrompt(false);
+                            setPromptDismissed(true);
+                          }}
+                          className="px-5 py-3 rounded-3xl bg-white/5 border border-white/10 text-[11px] font-black uppercase tracking-[0.3em] text-slate-300 hover:bg-white/10 transition-all"
+                        >
+                          No thanks
+                        </button>
+                        <button
+                          onClick={() => fetchYouTubeVideos(query)}
+                          className="px-5 py-3 rounded-3xl bg-gradient-to-r from-cyan-500 to-blue-500 text-black text-[11px] font-black uppercase tracking-[0.3em] hover:from-cyan-400 hover:to-blue-400 transition-all"
+                        >
+                          Yes, show me videos
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-5 text-[10px] text-slate-500 uppercase tracking-[0.3em]">Tip: this popup appears when a topic requires high-precision learning, such as cancer or oncology.</div>
+                  </div>
+                )}
+                {youtubeResults.length > 0 && (
+                  <div className="mb-10 rounded-[36px] border border-cyan-500/20 bg-[#04121f] p-6">
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                      <div>
+                        <p className="text-[9px] uppercase tracking-[0.35em] text-cyan-400 font-black">Video Companion</p>
+                        <h3 className="text-lg font-black text-white">Selected study videos for {query}</h3>
+                      </div>
+                      <button
+                        onClick={() => setYoutubeResults([])}
+                        className="p-2 rounded-full bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition-all"
+                        aria-label="Close videos"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {youtubeResults.map((video, index) => (
+                        <button
+                          key={video.id}
+                          onClick={() => setSelectedVideo(video.id)}
+                          className="group overflow-hidden rounded-3xl border border-white/10 bg-white/5 text-left hover:border-cyan-400/40 hover:bg-white/10 transition-all"
+                        >
+                          <div className="relative h-40 overflow-hidden">
+                            <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                          </div>
+                          <div className="p-4">
+                            <h4 className="text-sm font-bold text-white leading-tight mb-2">{video.title}</h4>
+                            <p className="text-[10px] text-slate-400">{video.channelTitle}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    {youtubeLoading && (
+                      <div className="mt-4 text-slate-500 text-sm">Searching videos...</div>
+                    )}
+                    {selectedVideo && (
+                      <div className="mt-6 aspect-video rounded-3xl overflow-hidden border border-white/10 bg-black">
+                        <iframe
+                          src={`https://www.youtube.com/embed/${selectedVideo}?autoplay=1&rel=0&modestbranding=1`}
+                          title="YouTube study video"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="w-full h-full"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
                 {loading ? (
                   <div className="flex flex-col items-center justify-center py-32 gap-6">
                     <motion.div
@@ -527,6 +652,24 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                           <p className="text-[9px] text-slate-600 font-mono uppercase tracking-widest p-3 bg-black/40">{book.images[0].caption} · {book.images[0].license || 'Wikimedia Commons'}</p>
                         </div>
                       )}
+                    </div>
+
+                    <div className="mb-10 rounded-3xl border border-white/10 bg-white/5 p-5">
+                      <div className="flex items-center justify-between gap-4 mb-3">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500 font-black">Chapter Completion</p>
+                          <p className="text-sm text-slate-300 mt-1">Track your reading progress and unlock the exam when the chapter is complete.</p>
+                        </div>
+                        <span className="text-[11px] font-black uppercase tracking-[0.35em] text-cyan-400">{chapterProgress}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-900 overflow-hidden border border-white/10">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${chapterProgress}%` }}
+                          transition={{ duration: 0.7, ease: 'easeOut' }}
+                          className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500"
+                        />
+                      </div>
                     </div>
 
                     {[

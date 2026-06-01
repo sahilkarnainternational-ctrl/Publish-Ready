@@ -312,7 +312,7 @@ export default function App() {
                     type="text" 
                     id="hero-search-input" 
                     className="flex-1 bg-transparent border-none text-white outline-none py-3 px-4 sm:p-0 text-center sm:text-left"
-                    placeholder="Search scientific phenomena..." 
+                    placeholder="Search chapters, formulas, or cancer study videos..." 
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') openReader((e.target as HTMLInputElement).value);
                     }}
@@ -403,7 +403,7 @@ export default function App() {
         {/* STUDY HUB */}
         <section id="study-hub" className="max-w-7xl mx-auto px-8 mb-32">
           <h2 className="text-center text-5xl font-bold uppercase tracking-widest mb-4">Theoretical <span className="text-[var(--accent)]">Sciences</span></h2>
-          <p className="text-center text-[#8b8b93] max-w-2xl mx-auto mb-8">Rigorous exploration of advanced sciences integrated with LaTeX mathematical formulations.</p>
+          <p className="text-center text-[#8b8b93] max-w-2xl mx-auto mb-8">Rigorous exploration of advanced sciences with 100+ chapter paths, searchable formulas, and curriculum-grade study flow.</p>
 
           <div className="flex flex-wrap justify-center gap-4 mb-12">
             {['Physics', 'Chemistry', 'Biology', 'Mathematics'].map((subject) => (

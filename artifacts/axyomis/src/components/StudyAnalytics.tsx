@@ -4,6 +4,7 @@ import { BarChart3, Brain, BookOpen, Video, Trophy, TrendingUp, Calendar, Target
 import { useUser } from '../context/UserContext';
 import { getTodayActivity, getWeekActivity, type ActivityEntry } from '../services/activityService';
 import { UpgradeModal } from './UpgradeModal';
+import { DATA_SETS } from '../constants';
 
 interface DayStats {
   day: string;
@@ -113,6 +114,7 @@ export const StudyAnalytics: React.FC = () => {
   const maxTotal = Math.max(...weekStats.map(d => d.total), 1);
 
   const todayQuizzes = todayEntries.filter(e => e.type === 'quiz');
+  const todayMinutes = todayEntries.reduce((sum, e) => sum + (e.duration ?? 0), 0);
   const todayAccuracy = todayQuizzes.length > 0
     ? Math.round((todayQuizzes.reduce((s, e) => s + (e.score ?? 0), 0) / Math.max(todayQuizzes.reduce((s, e) => s + (e.maxScore ?? 1), 0), 1)) * 100)
     : 0;
@@ -121,12 +123,16 @@ export const StudyAnalytics: React.FC = () => {
   const weekAccuracy = weekQuizzes > 0
     ? Math.round((weekEntries.filter(e => e.type === 'quiz').reduce((s, e) => s + (e.score ?? 0), 0) / Math.max(weekEntries.filter(e => e.type === 'quiz').reduce((s, e) => s + (e.maxScore ?? 1), 0), 1)) * 100)
     : 0;
+  const completedChaptersCount = weekEntries.filter(e => e.type === 'chapter').length;
+  const totalChapterCount = Object.values(DATA_SETS).reduce((sum, list) => sum + list.length, 0);
+  const completionPercentage = totalChapterCount > 0 ? Math.round((completedChaptersCount / totalChapterCount) * 100) : 0;
+  const chaptersLeft = Math.max(0, totalChapterCount - completedChaptersCount);
 
   const STAT_CARDS = [
     { icon: <Trophy className="w-5 h-5" />, label: "Today's Accuracy", value: todayAccuracy > 0 ? `${todayAccuracy}%` : '—', sub: `${todayQuizzes.length} quiz${todayQuizzes.length !== 1 ? 'zes' : ''} today`, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
-    { icon: <Brain className="w-5 h-5" />, label: 'Week Accuracy', value: weekAccuracy > 0 ? `${weekAccuracy}%` : '—', sub: `${weekQuizzes} quizzes this week`, color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
-    { icon: <Calendar className="w-5 h-5" />, label: 'Active Days', value: `${weekStreak}/7`, sub: 'days with activity', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
-    { icon: <BookOpen className="w-5 h-5" />, label: 'Topics Studied', value: `${weekEntries.filter(e => e.type === 'chapter').length}`, sub: 'chapters this week', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+    { icon: <Calendar className="w-5 h-5" />, label: 'Time Today', value: `${todayMinutes} min`, sub: 'active study time', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
+    { icon: <Brain className="w-5 h-5" />, label: 'Course Progress', value: `${completionPercentage}%`, sub: `${chaptersLeft} chapters left`, color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
+    { icon: <BookOpen className="w-5 h-5" />, label: 'Topics Studied', value: `${completedChaptersCount}`, sub: 'chapters this week', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
   ];
 
   const SUBJECT_COLORS = ['text-cyan-400', 'text-blue-400', 'text-purple-400', 'text-amber-400', 'text-green-400', 'text-rose-400'];

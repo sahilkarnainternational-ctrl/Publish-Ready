@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import { DATA_SETS, WIKI_MAP } from '../constants';
@@ -80,6 +80,7 @@ export const TopicGrid: React.FC<TopicGridProps> = ({ category, context, onOpenR
   const [cards, setCards] = useState<TopicCard[]>([]);
   const [visibleCount, setVisibleCount] = useState(8);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const loadedRef = useRef<Set<string>>(new Set());
 
   const getList = useCallback(() => {
@@ -88,8 +89,14 @@ export const TopicGrid: React.FC<TopicGridProps> = ({ category, context, onOpenR
     return DATA_SETS.diseases;
   }, [category, context]);
 
+  const topicList = useMemo(() => {
+    const list = getList();
+    if (!searchQuery.trim()) return list;
+    return list.filter((topic: string) => topic.toLowerCase().includes(searchQuery.trim().toLowerCase()));
+  }, [getList, searchQuery]);
+
   const loadBatch = useCallback((start: number, end: number) => {
-    const list = getList().slice(start, end);
+    const list = topicList.slice(start, end);
     list.forEach((topic: string) => {
       if (loadedRef.current.has(topic)) return;
       loadedRef.current.add(topic);
@@ -111,14 +118,14 @@ export const TopicGrid: React.FC<TopicGridProps> = ({ category, context, onOpenR
         }
       });
     });
-  }, [getList, context, category]);
+  }, [topicList, context, category]);
 
   useEffect(() => {
     setCards([]);
     setVisibleCount(8);
     loadedRef.current.clear();
     loadBatch(0, 8);
-  }, [category, context, loadBatch]);
+  }, [category, context, searchQuery, loadBatch]);
 
   useEffect(() => {
     if (visibleCount > 8) {
@@ -126,18 +133,42 @@ export const TopicGrid: React.FC<TopicGridProps> = ({ category, context, onOpenR
     }
   }, [visibleCount, loadBatch]);
 
-  const list = getList();
+  const totalChapters = topicList.length;
   const visibleCards = cards.slice(0, visibleCount);
-  const hasMore = visibleCount < list.length;
+  const hasMore = visibleCount < totalChapters;
 
   const handleLoadMore = () => {
     setLoading(true);
-    setVisibleCount(prev => Math.min(prev + 8, list.length));
+    setVisibleCount(prev => Math.min(prev + 8, totalChapters));
     setTimeout(() => setLoading(false), 300);
   };
 
   return (
     <div>
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.35em] text-slate-500 font-black mb-2">Chapter Search</div>
+          <div className="text-sm text-slate-300">{category === 'study' ? `${topicList.length} chapters available in ${context || 'Science'}` : `${topicList.length} topics available`}</div>
+        </div>
+        <div className="relative w-full sm:w-[340px]">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search chapter, formula, topic..."
+            className="w-full rounded-3xl border border-white/10 bg-black/60 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+              aria-label="Clear search"
+            >
+              <i className="fas fa-times" />
+            </button>
+          )}
+        </div>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         {visibleCards.map((card, i) => (
           <motion.button
