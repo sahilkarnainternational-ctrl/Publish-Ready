@@ -22,7 +22,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { User as LucideUser, Volume2, Shield, Radio, Activity, Terminal, Brain, Crown, GraduationCap, HelpCircle, X } from 'lucide-react';
 import { MarqueeBanner } from './components/MarqueeBanner';
 import { Globe } from './components/Globe';
-import { AstraCore } from './components/AstraCore';
+import { AstraOrb } from './components/AstraOrb';
 import { WorldNewsGlobe } from './components/WorldNewsGlobe';
 import { WeatherDashboard } from './components/WeatherDashboard';
 import { MarketTicker } from './components/MarketTicker';
@@ -31,6 +31,8 @@ import { ScrollExpansionHero } from './components/ScrollExpansionHero';
 import { OriginDialog } from './components/OriginDialog';
 import { ChapterReader } from './components/ChapterReader';
 import { TopicGrid } from './components/TopicGrid';
+import SidebarWidgets from './components/SidebarWidgets';
+import LeftNewsPanel from './components/LeftNewsPanel';
 import { voiceService } from './services/voice';
 import { useUser } from './context/UserContext';
 import { load3D as engineLoad3D } from './engine3d';
@@ -152,6 +154,12 @@ export default function App() {
     setIsAstraVoiceOpen(true);
   }, []);
 
+  useEffect(() => {
+    const handler = () => openAstraVoice();
+    window.addEventListener('neural-core-activate', handler);
+    return () => window.removeEventListener('neural-core-activate', handler);
+  }, [openAstraVoice]);
+
   const terminateSession = useCallback(() => {
     setIsChatOpen(false);
     setIsAstraVoiceOpen(false);
@@ -204,6 +212,7 @@ export default function App() {
       </div>
 
       <MarqueeBanner />
+      <LeftNewsPanel />
       
       {/* Background Decorative Globe */}
       <div className="fixed top-0 right-0 w-[600px] h-[600px] -translate-y-1/2 translate-x-1/2 opacity-20 pointer-events-none z-0 overflow-hidden">
@@ -232,6 +241,8 @@ export default function App() {
       </div>
 
       <canvas id="starfield"></canvas>
+
+      <SidebarWidgets />
 
       <nav>
         <a href="#" className="flex items-center gap-4">
@@ -379,20 +390,37 @@ export default function App() {
           </div>
         </section>
 
-        <section className="max-w-7xl mx-auto px-8 mb-24 space-y-10">
+        <section className="max-w-7xl mx-auto px-8 mb-24">
           <div className="flex flex-col gap-4 text-center">
-            <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">Holographic Intelligence Suite</p>
-            <h2 className="text-5xl font-bold uppercase tracking-[0.18em] text-white">Astra Command Dashboard</h2>
-            <p className="max-w-3xl mx-auto text-slate-400 text-sm sm:text-base">A visually immersive intelligence layer that keeps students engaged with news, weather, market pulse and mission-ready scheduling, while preserving the core study experience.</p>
+            <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">Voice Assistant</p>
+            <h2 className="text-4xl font-bold uppercase tracking-[0.12em] text-white">Talk to Astra</h2>
+            <p className="max-w-3xl mx-auto text-slate-400 text-sm sm:text-base">Use voice to ask questions, play explanations, or control study flow. The orb responds visually and the voice module handles dialogue.</p>
           </div>
 
-          <div className="grid gap-6">
-            <AstraCore />
-            <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-              <WorldNewsGlobe />
-              <div className="grid gap-6">
-                <WeatherDashboard />
-                <MarketTicker />
+          <div className="mt-8 grid items-center gap-8 lg:grid-cols-2">
+            <div className="flex items-center justify-center">
+              {/* Astra orb visual — keeps existing AstraOrb component which lazy-loads the WebGL orb */}
+              <div className="rounded-2xl p-6 bg-[#04060a]/70 border border-white/6 shadow-lg">
+                {/* @ts-ignore */}
+                <AstraOrb state="idle" />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-2xl p-4 bg-black/80 border border-white/6">
+                <p className="text-sm text-slate-300">Activate Astra for voice-guided tutoring and explanations.</p>
+                <div className="mt-3 flex gap-3">
+                  <button onClick={() => { const ev = new CustomEvent('open-astra-voice'); window.dispatchEvent(ev); }} className="px-4 py-2 bg-white/5 text-white rounded">Open Voice</button>
+                  <button onClick={() => { /* placeholder: link to tutor */ }} className="px-4 py-2 bg-white/3 text-white rounded">Open AI Tutor</button>
+                </div>
+              </div>
+
+              <div className="grid gap-4">
+                <WorldNewsGlobe />
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <WeatherDashboard />
+                  <MarketTicker />
+                </div>
                 <ClockCalendar />
               </div>
             </div>

@@ -181,7 +181,8 @@ const fetchWiki = async (topic: string, context = ''): Promise<ChapterData | nul
 };
 
 const getRelatedTopics = (topic: string, context = ''): string[] => {
-  const all = (context && DATA_SETS[context]) ? DATA_SETS[context] : Object.values(DATA_SETS).flat();
+  const key = context as keyof typeof DATA_SETS;
+  const all = (context && DATA_SETS[key]) ? DATA_SETS[key] : Object.values(DATA_SETS).flat();
   const idx = all.indexOf(topic);
   if (idx < 0) return all.slice(0, 5);
   const neighbors = all.slice(Math.max(0, idx - 2), idx).concat(all.slice(idx + 1, idx + 3));
@@ -236,7 +237,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
   const [visitedSections, setVisitedSections] = useState<Set<string>>(new Set(['overview']));
   const [showYouTubePrompt, setShowYouTubePrompt] = useState(false);
   const [promptDismissed, setPromptDismissed] = useState(false);
-  const [youtubeResults, setYoutubeResults] = useState<{ id: string; title: string; thumbnail: string }[]>([]);
+  const [youtubeResults, setYoutubeResults] = useState<{ id: string; title: string; thumbnail: string; channelTitle: string }[]>([]);
   const [youtubeLoading, setYoutubeLoading] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
