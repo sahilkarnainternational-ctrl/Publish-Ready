@@ -29,6 +29,7 @@ import { TopicGrid } from './components/TopicGrid';
 import { voiceService } from './services/voice';
 import { useUser } from './context/UserContext';
 import { load3D as engineLoad3D } from './engine3d';
+import { Analytics } from '@vercel/analytics/react';
 
 export default function App() {
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -830,6 +831,7 @@ export default function App() {
           <p>More scientific jargon and protocol descriptions could go here to further populate the scrollable region. The goal is to provide a comprehensive legal or informative overlay for the explorer.</p>
         </div>
       </OriginDialog>
+      <Analytics />
     </div>
   );
 }
