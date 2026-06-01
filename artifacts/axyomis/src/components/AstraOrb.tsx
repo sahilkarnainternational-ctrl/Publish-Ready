@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, type MutableRefObject } from 'react';
+import React, { useEffect, useRef, type MutableRefObject, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export type OrbState = 'idle' | 'listening' | 'thinking' | 'speaking';
@@ -96,6 +96,29 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
   const ringSpeed = state === 'thinking' ? 4 : state === 'speaking' ? 6 : 18;
   const innerSpeed = state === 'thinking' ? 6 : state === 'speaking' ? 8 : 22;
   const isActive = state !== 'idle';
+
+  // Render WebGL 3D orb on capable environments for a richer effect
+  if (typeof window !== 'undefined') {
+    const AstraOrb3D = React.lazy(() => import('./AstraOrb3D'));
+    return (
+      <Suspense fallback={(
+        <div className="astra-orb-root" style={{ width: size, height: size }}>
+          {/* fallback to existing DOM orb visuals while loading WebGL */}
+          <div
+            ref={haloRef}
+            className="astra-orb-ambient"
+            style={{
+              background: conic,
+              filter: `blur(${isMobile ? 24 : 42}px) saturate(180%)`,
+              opacity: 0.68,
+            }}
+          />
+        </div>
+      )}>
+        <AstraOrb3D state={state} analyserRef={analyserRef} size={size} />
+      </Suspense>
+    );
+  }
 
   return (
     <div className="astra-orb-root" style={{ width: size, height: size }}>
