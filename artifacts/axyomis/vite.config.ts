@@ -55,6 +55,14 @@ export default defineConfig(async ({ mode }) => {
       strictPort: true,
       host: "0.0.0.0",
       allowedHosts: true,
+      proxy: {
+        '/api': {
+          target: 'http://127.0.0.1:3000',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path,
+        },
+      },
       fs: {
         strict: true,
         allow: [

@@ -7,14 +7,41 @@ import { UpgradeModal } from './UpgradeModal';
 
 const FREE_DAILY_LIMIT = 5;
 
+function safeLocalStorageGet(key: string): string | null {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeLocalStorageSet(key: string, value: string): void {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    window.localStorage.setItem(key, value);
+  } catch {
+    return;
+  }
+}
+
+function safeLocalStorageRemove(key: string): void {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    window.localStorage.removeItem(key);
+  } catch {
+    return;
+  }
+}
+
 function getDailyQuizCount(): number {
   const key = `axyomis_quiz_day_${new Date().toISOString().slice(0, 10)}`;
-  return parseInt(localStorage.getItem(key) ?? '0', 10);
+  return parseInt(safeLocalStorageGet(key) ?? '0', 10);
 }
 
 function incrementDailyQuizCount(): void {
   const key = `axyomis_quiz_day_${new Date().toISOString().slice(0, 10)}`;
-  localStorage.setItem(key, String(getDailyQuizCount() + 1));
+  safeLocalStorageSet(key, String(getDailyQuizCount() + 1));
 }
 
 interface QuizQuestion {
@@ -74,16 +101,22 @@ export const QuizSection: React.FC = () => {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
 
   const [playedIds, setPlayedIds] = useState<Set<string>>(() => {
-    const saved = localStorage.getItem('axyomis_played_ids');
-    return saved ? new Set(JSON.parse(saved)) : new Set();
+    const saved = safeLocalStorageGet('axyomis_played_ids');
+    if (!saved) return new Set();
+    try {
+      return new Set(JSON.parse(saved));
+    } catch {
+      return new Set();
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem('axyomis_played_ids', JSON.stringify(Array.from(playedIds)));
+    safeLocalStorageSet('axyomis_played_ids', JSON.stringify(Array.from(playedIds)));
   }, [playedIds]);
 
   useEffect(() => {
-    if (localStorage.getItem('axyomis_active_session')) {
+    const activeSession = safeLocalStorageGet('axyomis_active_session');
+    if (activeSession) {
       setSetupPhase('resume');
     }
   }, []);
@@ -109,7 +142,7 @@ export const QuizSection: React.FC = () => {
 
   useEffect(() => {
     if (gameActive && !showReport) {
-      localStorage.setItem('axyomis_active_session', JSON.stringify({
+      safeLocalStorageSet('axyomis_active_session', JSON.stringify({
         questions,
         currentIndex,
         score,
@@ -119,24 +152,28 @@ export const QuizSection: React.FC = () => {
         sessionResults
       }));
     } else {
-      localStorage.removeItem('axyomis_active_session');
+      safeLocalStorageRemove('axyomis_active_session');
     }
   }, [gameActive, showReport, questions, currentIndex, score, isAnswered, selectedOption, timeLeft, sessionResults]);
 
   const resumeSession = () => {
-    const saved = localStorage.getItem('axyomis_active_session');
+    const saved = safeLocalStorageGet('axyomis_active_session');
     if (saved) {
-      const parsed = JSON.parse(saved);
-      setQuestions(parsed.questions);
-      setCurrentIndex(parsed.currentIndex);
-      setScore(parsed.score);
-      setIsAnswered(parsed.isAnswered);
-      setSelectedOption(parsed.selectedOption);
-      setTimeLeft(parsed.timeLeft ?? 15);
-      setSessionResults(parsed.sessionResults ?? []);
-      setGameActive(true);
-      setShowReport(false);
-      setSetupPhase('none');
+      try {
+        const parsed = JSON.parse(saved);
+        setQuestions(parsed.questions);
+        setCurrentIndex(parsed.currentIndex);
+        setScore(parsed.score);
+        setIsAnswered(parsed.isAnswered);
+        setSelectedOption(parsed.selectedOption);
+        setTimeLeft(parsed.timeLeft ?? 15);
+        setSessionResults(parsed.sessionResults ?? []);
+        setGameActive(true);
+        setShowReport(false);
+        setSetupPhase('none');
+      } catch {
+        safeLocalStorageRemove('axyomis_active_session');
+      }
     }
   };
 

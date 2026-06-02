@@ -24,7 +24,9 @@ export default async function handler(req, res) {
 
     const apiKey = cleanApiKey(process.env.GROQ_API_KEY);
     if (!apiKey) {
-      res.status(500).json({ error: 'GROQ_API_KEY not configured' });
+      // Return a friendly placeholder reply so the frontend doesn't crash
+      // and the app remains usable in read-only/demo mode.
+      res.status(200).json({ engine: 'local', reply: 'The AI service is not configured (GROQ_API_KEY missing). Configure the GROQ_API_KEY in your environment to enable AI chat.' });
       return;
     }
 
