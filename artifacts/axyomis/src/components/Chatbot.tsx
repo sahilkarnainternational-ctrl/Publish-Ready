@@ -1091,7 +1091,11 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
           }, ...prev];
         }
         
-        localStorage.setItem('lyra_academic_history', JSON.stringify(updated));
+        try {
+          localStorage.setItem('lyra_academic_history', JSON.stringify(updated));
+        } catch (e) {
+          console.warn('Failed to save history to localStorage', e);
+        }
         return updated;
       });
     }
@@ -1115,7 +1119,11 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
     e.stopPropagation();
     const updated = sessions.filter(s => s.id !== id);
     setSessions(updated);
-    localStorage.setItem('lyra_academic_history', JSON.stringify(updated));
+    try {
+      localStorage.setItem('lyra_academic_history', JSON.stringify(updated));
+    } catch (e) {
+      console.warn('Failed to save history to localStorage', e);
+    }
     if (activeSessionId === id) {
       startNewSession();
     }
