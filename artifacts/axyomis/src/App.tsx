@@ -17,6 +17,8 @@ import { StudyAnalytics } from './components/StudyAnalytics';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { ReviewSection } from './components/ReviewSection';
 import { ParentReport } from './components/ParentReport';
+import { FeedbackSection } from './components/FeedbackSection';
+import { MaintenanceNote } from './components/MaintenanceNote';
 import { auth, getUserProfile, handleGoogleRedirectResult } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { User as LucideUser, Volume2, Shield, Radio, Activity, Terminal, Brain, Crown, GraduationCap, HelpCircle, X } from 'lucide-react';
@@ -201,7 +203,7 @@ export default function App() {
       <MarqueeBanner />
       
       {/* Background Decorative Globe */}
-      <div className="fixed top-0 right-0 w-[600px] h-[600px] -translate-y-1/2 translate-x-1/2 opacity-20 pointer-events-none z-0 overflow-hidden">
+      <div className="fixed top-0 right-0 globe-background -translate-y-1/2 translate-x-1/2 opacity-20 pointer-events-none z-0 overflow-hidden">
         <Globe />
       </div>
 
@@ -331,14 +333,14 @@ export default function App() {
                 <div className="mt-8 flex flex-wrap gap-4 items-center justify-center sm:justify-start">
                   <button 
                     onClick={openAstraVoice}
-                    className="ambient-glow flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600/25 to-violet-600/25 border border-blue-500/40 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white hover:from-blue-600/35 hover:to-violet-600/35 transition-all shadow-[0_0_40px_rgba(59,130,246,0.2)] group touch-target"
+                    className="ambient-glow flex items-center gap-3 px-4 sm:px-8 py-4 bg-gradient-to-r from-blue-600/25 to-violet-600/25 border border-blue-500/40 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white hover:from-blue-600/35 hover:to-violet-600/35 transition-all shadow-[0_0_40px_rgba(59,130,246,0.2)] group touch-target"
                   >
                     <Volume2 className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform" />
                     <span>Talk with Astra</span>
                   </button>
                   <button
                     onClick={openDoubtSolver}
-                    className="ambient-glow flex items-center gap-3 px-8 py-4 bg-white/10 border border-white/15 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white hover:bg-white/15 transition-all shadow-[0_0_30px_rgba(255,255,255,0.08)]"
+                    className="ambient-glow flex items-center gap-3 px-4 sm:px-8 py-4 bg-white/10 border border-white/15 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white hover:bg-white/15 transition-all shadow-[0_0_30px_rgba(255,255,255,0.08)]"
                   >
                     <HelpCircle className="w-4 h-4 text-cyan-300" />
                     <span>Doubt Solver</span>
@@ -380,7 +382,7 @@ export default function App() {
           {/* Main Content Sections... */}
         </div>
 
-        <section id="kids-zone" className="max-w-7xl mx-auto px-8 mb-32">
+        <section id="kids-zone" className="max-w-7xl mx-auto px-4 sm:px-8 mb-32">
           <h2 className="text-center text-5xl font-bold uppercase tracking-widest mb-4">Quantum Kids: <span className="text-[var(--accent)]">Early Explorers</span></h2>
           <p className="text-center text-[#8b8b93] max-w-2xl mx-auto mb-12">A specially designed gateway for young minds to embark on their first scientific journey.</p>
 
@@ -388,7 +390,7 @@ export default function App() {
             {['Nature', 'Fruits', 'Vegetables', 'Hygiene'].map((subject) => (
               <div key={subject} className="relative group">
                 <button
-                  className={`subject-toggle px-8 py-3 rounded-full border border-white/10 bg-white/5 hover:bg-[var(--accent-dim)] hover:border-[var(--accent)] text-slate-300 font-bold uppercase tracking-widest transition-all cursor-pointer ${subject === kidsSubject ? 'active-subject' : ''}`}
+                  className={`subject-toggle px-4 sm:px-8 py-3 rounded-full border border-white/10 bg-white/5 hover:bg-[var(--accent-dim)] hover:border-[var(--accent)] text-slate-300 font-bold uppercase tracking-widest transition-all cursor-pointer ${subject === kidsSubject ? 'active-subject' : ''}`}
                   onClick={() => setKidsSubject(subject)}
                 >
                   {subject}
@@ -401,15 +403,15 @@ export default function App() {
         </section>
 
         {/* STUDY HUB */}
-        <section id="study-hub" className="max-w-7xl mx-auto px-8 mb-32">
+        <section id="study-hub" className="max-w-7xl mx-auto px-4 sm:px-8 mb-32">
           <h2 className="text-center text-5xl font-bold uppercase tracking-widest mb-4">Theoretical <span className="text-[var(--accent)]">Sciences</span></h2>
-          <p className="text-center text-[#8b8b93] max-w-2xl mx-auto mb-8">Rigorous exploration of advanced sciences with 100+ chapter paths, searchable formulas, and curriculum-grade study flow.</p>
+          <p className="text-center text-[#8b8b93] max-w-2xl mx-auto mb-8">Best app for learning advanced science topics on desktop and mobile — with chapter lessons, topic videos, formulas, and curriculum-grade study flow for every Physics, Chemistry, Biology, and Mathematics subject.</p>
 
           <div className="flex flex-wrap justify-center gap-4 mb-12">
             {['Physics', 'Chemistry', 'Biology', 'Mathematics'].map((subject) => (
               <div key={subject} className="relative group">
                 <button
-                  className={`subject-toggle px-8 py-3 rounded-full border border-white/10 bg-white/5 hover:bg-[var(--accent-dim)] hover:border-[var(--accent)] text-slate-300 font-bold uppercase tracking-widest transition-all cursor-pointer ${subject === studySubject ? 'active-subject' : ''}`}
+                  className={`subject-toggle px-4 sm:px-8 py-3 rounded-full border border-white/10 bg-white/5 hover:bg-[var(--accent-dim)] hover:border-[var(--accent)] text-slate-300 font-bold uppercase tracking-widest transition-all cursor-pointer ${subject === studySubject ? 'active-subject' : ''}`}
                   onClick={() => setStudySubject(subject)}
                 >
                   {subject}
@@ -430,9 +432,9 @@ export default function App() {
         <QuizSection />
 
         {/* 3D INTERACTIVE MODULES */}
-        <section className="max-w-7xl mx-auto px-8 space-y-24 mb-32">
+        <section className="max-w-7xl mx-auto px-4 sm:px-8 space-y-24 mb-32">
           {/* COSMOS */}
-          <div id="cosmos-section" className="grid grid-cols-1 lg:grid-cols-[1.2fr_1.8fr] gap-12 bg-white/[0.02] border border-white/5 rounded-[var(--r)] p-12 backdrop-blur-xl">
+          <div id="cosmos-section" className="grid grid-cols-1 lg:grid-cols-[1.2fr_1.8fr] gap-12 bg-white/[0.02] border border-white/5 rounded-[var(--r)] p-8 sm:p-12 backdrop-blur-xl">
             <div className="space-y-8">
               <h2 className="text-3xl font-bold uppercase tracking-widest leading-tight">Cosmos & <span className="text-[var(--accent)]">Astrophysics</span></h2>
               <div className="flex flex-wrap gap-2">
@@ -462,7 +464,7 @@ export default function App() {
           </div>
 
           {/* ANATOMY */}
-          <div id="anatomy-section" className="grid grid-cols-1 lg:grid-cols-[1.2fr_1.8fr] gap-12 bg-white/[0.02] border border-white/5 rounded-[var(--r)] p-12 backdrop-blur-xl">
+          <div id="anatomy-section" className="grid grid-cols-1 lg:grid-cols-[1.2fr_1.8fr] gap-12 bg-white/[0.02] border border-white/5 rounded-[var(--r)] p-8 sm:p-12 backdrop-blur-xl">
             <div className="space-y-8">
               <h2 className="text-3xl font-bold uppercase tracking-widest leading-tight">Spatial <span className="text-[var(--accent)]">Anatomy</span></h2>
               <div className="flex flex-wrap gap-2">
@@ -492,7 +494,7 @@ export default function App() {
           </div>
 
           {/* HOSPITAL */}
-          <div id="hospital-section" className="grid grid-cols-1 lg:grid-cols-[1.2fr_1.8fr] gap-12 bg-white/[0.02] border border-white/5 rounded-[var(--r)] p-12 backdrop-blur-xl">
+          <div id="hospital-section" className="grid grid-cols-1 lg:grid-cols-[1.2fr_1.8fr] gap-12 bg-white/[0.02] border border-white/5 rounded-[var(--r)] p-8 sm:p-12 backdrop-blur-xl">
             <div className="space-y-8">
               <h2 className="text-3xl font-bold uppercase tracking-widest leading-tight">Clinical <span className="text-[var(--accent)]">Environments</span></h2>
               <div className="flex flex-wrap gap-2">
@@ -522,7 +524,7 @@ export default function App() {
           </div>
         </section>
 
-        <section id="diseases-section" className="max-w-7xl mx-auto px-8 mb-32">
+        <section id="diseases-section" className="max-w-7xl mx-auto px-4 sm:px-8 mb-32">
           <h2 className="text-center text-5xl font-bold uppercase tracking-widest mb-4">Pathology <span className="text-red-500">& Disease Index</span></h2>
           <p className="text-center text-[#8b8b93] max-w-2xl mx-auto mb-12">Comprehensive repository of infectious, genetic, and chronic diseases.</p>
           <TopicGrid category="diseases" context="diseases" onOpenReader={openReader} />
@@ -535,7 +537,7 @@ export default function App() {
         <StudyAnalytics />
 
         {/* AI TUTOR PROMO BANNER */}
-        <section className="max-w-7xl mx-auto px-8 mb-24">
+        <section className="max-w-7xl mx-auto px-4 sm:px-8 mb-24">
           <div className="relative rounded-3xl overflow-hidden border border-cyan-500/20 bg-gradient-to-r from-cyan-950/60 via-[#070810] to-blue-950/60 p-10 sm:p-14">
             <div className="absolute inset-0 pointer-events-none">
               <div className="absolute left-0 top-0 w-80 h-80 bg-cyan-500/10 blur-[100px] rounded-full -translate-x-1/2 -translate-y-1/2" />
@@ -581,7 +583,7 @@ export default function App() {
                 )}
                 <button
                   onClick={openAITutor}
-                  className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl text-black font-black uppercase tracking-widest text-[10px] hover:from-cyan-400 hover:to-blue-400 shadow-xl shadow-cyan-500/20 transition-all flex items-center gap-2"
+                  className="px-4 sm:px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl text-black font-black uppercase tracking-widest text-[10px] hover:from-cyan-400 hover:to-blue-400 shadow-xl shadow-cyan-500/20 transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
                 >
                   <Brain className="w-4 h-4" /> Open AI Tutor
                 </button>
@@ -591,7 +593,7 @@ export default function App() {
         </section>
 
         {/* ASTRA LABS SECTION */}
-        <section id="astra-labs" className="max-w-7xl mx-auto px-8 mb-32">
+        <section id="astra-labs" className="max-w-7xl mx-auto px-4 sm:px-8 mb-32">
           <div className="mb-16">
             <div className="flex items-center gap-4 mb-6">
               <span className="w-12 h-px bg-blue-500"></span>
@@ -602,7 +604,7 @@ export default function App() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-2 group">
-              <div className="relative aspect-video bg-black rounded-[48px] overflow-hidden border border-white/5 hover:border-blue-500/30 transition-all p-12 flex flex-col justify-between group">
+              <div className="relative aspect-video bg-black rounded-[48px] overflow-hidden border border-white/5 hover:border-blue-500/30 transition-all p-8 sm:p-12 flex flex-col justify-between group">
                 <div className="absolute inset-0 opacity-20 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
                 <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 blur-[100px] -translate-y-1/2 translate-x-1/2 rounded-full"></div>
                 
@@ -645,7 +647,7 @@ export default function App() {
             </div>
 
             <div className="flex flex-col gap-8">
-              <div className="bg-gradient-to-br from-indigo-600/20 to-transparent border border-white/5 rounded-[48px] p-10 flex flex-col justify-between flex-1 relative overflow-hidden group">
+              <div className="bg-gradient-to-br from-indigo-600/20 to-transparent border border-white/5 rounded-[48px] p-6 sm:p-10 flex flex-col justify-between flex-1 relative overflow-hidden group">
                  <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                    <Activity className="w-20 h-20 text-white" />
                  </div>
@@ -657,7 +659,7 @@ export default function App() {
                    Enter Simulation
                  </button>
               </div>
-              <div className="bg-black/40 border border-white/5 rounded-[48px] p-10 flex items-center justify-center relative overflow-hidden group">
+              <div className="bg-black/40 border border-white/5 rounded-[48px] p-6 sm:p-10 flex items-center justify-center relative overflow-hidden group">
                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent"></div>
                  <div className="text-center italic">
                    <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.4em] mb-2 animate-pulse">Neural Synchronization</p>
@@ -669,6 +671,8 @@ export default function App() {
         </section>
 
       </main>
+
+      <FeedbackSection />
 
       {/* PARENT REPORT SECTION */}
       <ParentReport />
@@ -694,7 +698,7 @@ export default function App() {
       <footer className="pt-32 pb-20 border-t border-white/5 bg-[#08080a] relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent"></div>
         
-        <div className="max-w-7xl mx-auto px-8 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-20 mb-24">
             <div className="space-y-8">
               <div className="flex items-center gap-4">
@@ -772,6 +776,7 @@ export default function App() {
           </div>
         </div>
       </footer>
+      <MaintenanceNote />
       <GlobalPopups isChatOpen={isChatOpen} isTutorOpen={isAITutorOpen} />
       <AstraVoice isOpen={isAstraVoiceOpen} onClose={() => setIsAstraVoiceOpen(false)} />
       <Chatbot 

@@ -9,7 +9,10 @@ const TICKET_ITEMS = [
   "ASTRA AI CORE V2.4",
   "ANALYSIS COMPLETE",
   "MOLECULAR ANALYSIS IN PROGRESS",
-  "RESEARCH NETWORK LINKED"
+  "RESEARCH NETWORK LINKED",
+  "NOTICE: Some features may not work and are under improvement",
+  "Update soon with a smoother experience",
+  "Please share helpful feedback to improve the app"
 ];
 
 export const MarqueeBanner: React.FC = () => {
