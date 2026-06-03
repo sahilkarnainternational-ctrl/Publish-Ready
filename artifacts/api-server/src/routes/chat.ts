@@ -10,9 +10,13 @@ router.post("/chat", async (req, res) => {
       return;
     }
 
-    const apiKey = process.env.GROQ_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY?.trim();
     if (!apiKey) {
-      res.status(500).json({ error: "GROQ_API_KEY not configured" });
+      res.status(200).json({
+        engine: "local",
+        reply:
+          "The AI service is not configured (GROQ_API_KEY missing). Configure GROQ_API_KEY in your environment to enable AI chat.",
+      });
       return;
     }
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { safeLocalStorageGet, safeLocalStorageSet } from '../lib/safeStorage';
 
 export type CurrencyCode = 'USD' | 'NPR' | 'INR' | 'GBP' | 'AUD' | 'CAD' | 'EUR';
 
@@ -76,7 +77,7 @@ export function useCurrency() {
 
   // Async refinement using a free IP geolocation service (best-effort, cached)
   useEffect(() => {
-    const cached = typeof window !== 'undefined' ? window.localStorage.getItem('axyomis_geo_currency') : null;
+    const cached = safeLocalStorageGet('axyomis_geo_currency');
     if (cached) {
       try {
         const parsed = JSON.parse(cached) as CurrencyInfo;
@@ -101,7 +102,7 @@ export function useCurrency() {
         const resolved = map[countryCode];
         if (resolved) {
           setInfo(resolved);
-          try { window.localStorage.setItem('axyomis_geo_currency', JSON.stringify(resolved)); } catch { /* ignore */ }
+          safeLocalStorageSet('axyomis_geo_currency', JSON.stringify(resolved));
         }
       })
       .catch(() => { /* fall back to timezone detection */ });

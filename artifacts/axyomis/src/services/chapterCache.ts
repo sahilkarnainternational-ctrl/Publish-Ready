@@ -1,5 +1,6 @@
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
+import { safeSessionStorageGet, safeSessionStorageSet } from '../lib/safeStorage';
 
 export interface BookChapter {
   title: string;
@@ -39,18 +40,20 @@ export async function getCachedChapter(
 ): Promise<BookChapter | null> {
   const id = chapterCacheId(topic, subject, classLevel, curriculum);
   const localKey = `axyomis_chapter_${id}`;
-  try {
-    const local = sessionStorage.getItem(localKey);
-    if (local) return JSON.parse(local) as BookChapter;
-  } catch {
-    /* ignore */
+  const local = safeSessionStorageGet(localKey);
+  if (local) {
+    try {
+      return JSON.parse(local) as BookChapter;
+    } catch {
+      /* ignore corrupt cache */
+    }
   }
 
   try {
     const snap = await getDoc(doc(db, 'chapter_cache', id));
     if (snap.exists()) {
       const data = snap.data() as BookChapter;
-      sessionStorage.setItem(localKey, JSON.stringify(data));
+      safeSessionStorageSet(localKey, JSON.stringify(data));
       return data;
     }
   } catch (e) {
@@ -62,7 +65,7 @@ export async function getCachedChapter(
 export async function saveCachedChapter(chapter: BookChapter) {
   const id = chapterCacheId(chapter.topic, chapter.subject, chapter.classLevel, chapter.curriculum);
   const localKey = `axyomis_chapter_${id}`;
-  sessionStorage.setItem(localKey, JSON.stringify(chapter));
+  safeSessionStorageSet(localKey, JSON.stringify(chapter));
   try {
     await setDoc(doc(db, 'chapter_cache', id), { ...chapter, updatedAt: serverTimestamp() }, { merge: true });
   } catch (e) {

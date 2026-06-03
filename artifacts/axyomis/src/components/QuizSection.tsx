@@ -4,35 +4,13 @@ import { CheckCircle2, XCircle, BrainCircuit, ChevronRight, RefreshCw, Trophy, T
 import allQuizData from '../data/axyomis_full_quiz.json';
 import { useUser } from '../context/UserContext';
 import { UpgradeModal } from './UpgradeModal';
+import {
+  safeLocalStorageGet,
+  safeLocalStorageRemove,
+  safeLocalStorageSet,
+} from '../lib/safeStorage';
 
 const FREE_DAILY_LIMIT = 5;
-
-function safeLocalStorageGet(key: string): string | null {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return null;
-    return window.localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function safeLocalStorageSet(key: string, value: string): void {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return;
-    window.localStorage.setItem(key, value);
-  } catch {
-    return;
-  }
-}
-
-function safeLocalStorageRemove(key: string): void {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return;
-    window.localStorage.removeItem(key);
-  } catch {
-    return;
-  }
-}
 
 function getDailyQuizCount(): number {
   const key = `axyomis_quiz_day_${new Date().toISOString().slice(0, 10)}`;
@@ -178,7 +156,7 @@ export const QuizSection: React.FC = () => {
   };
 
   const clearSessionAndStartNew = () => {
-    localStorage.removeItem('axyomis_active_session');
+    safeLocalStorageRemove('axyomis_active_session');
     setSetupPhase('difficulty');
   };
 
@@ -284,7 +262,7 @@ export const QuizSection: React.FC = () => {
     setShowReport(false);
     setQuestions([]);
     setSetupPhase('difficulty');
-    localStorage.removeItem('axyomis_active_session');
+    safeLocalStorageRemove('axyomis_active_session');
   };
 
   const getDifficultyColor = (diff: string) => {

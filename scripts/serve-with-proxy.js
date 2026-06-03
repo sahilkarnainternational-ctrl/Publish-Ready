@@ -3,8 +3,8 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 
 const app = express();
 const PORT = process.env.PORT || 4174;
-const API_TARGET = process.env.API_TARGET || 'http://127.0.0.1:3000';
-const FRONTEND_TARGET = process.env.FRONTEND_TARGET || 'http://127.0.0.1:5173';
+const API_TARGET = process.env.API_TARGET || 'http://127.0.0.1:8080';
+const FRONTEND_TARGET = process.env.FRONTEND_TARGET || 'http://127.0.0.1:4173';
 
 // Proxy /api to backend API server
 app.use('/api', createProxyMiddleware({ 
