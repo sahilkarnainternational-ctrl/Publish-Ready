@@ -342,14 +342,15 @@
 @keyframes rainbowScroll { 0% { background-position: 0% 0; } 100% { background-position: 180% 0; } }
 
 nav { 
-  position:fixed; top:0; width:100%; z-index:1000; padding:1.2rem 3rem; display:flex; align-items:center; justify-content:space-between; 
+  position:fixed; top:0; width:100%; z-index:1000; padding:1.2rem 3rem; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:0.75rem;
   background:rgba(5, 7, 10, 0.8); backdrop-filter:blur(30px); border-bottom:1px solid var(--glass-border); 
   padding-top: max(1.2rem, env(safe-area-inset-top));
 }
 .brand-name { font-family:'Rajdhani', sans-serif; font-size:1.6rem; font-weight:700; color:var(--text); letter-spacing:2px; text-transform: uppercase; }
-.nav-links { display:flex; gap:1.2rem; }
+.nav-links { display:flex; gap:1.2rem; flex-wrap:wrap; align-items:center; }
 .nav-links a { color:var(--muted); font-size:0.85rem; font-weight:600; font-family: 'Rajdhani', sans-serif; text-transform:uppercase; letter-spacing:1px; text-decoration:none; transition:var(--tr); }
 .nav-links a:hover { color:var(--accent); }
+.globe-background { width: min(600px, 70vw); height: min(600px, 70vw); }
 
 /* GRID ELEMENTS */
 .rich-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:30px; }
@@ -588,14 +589,33 @@ nav {
 
 /* MOBILE RESPONSIVENESS */
 @media (max-width: 768px) {
-  nav { padding: 0.75rem 1rem; padding-top: max(0.75rem, env(safe-area-inset-top)); flex-direction: row; gap: 0; align-items: center; }
+  nav { padding: 0.9rem 1rem; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; }
   .brand-name { font-size: 1.1rem; }
+  nav > a { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 0.8rem; }
+  nav > a p { font-size: 0.65rem; line-height: 1.2; max-width: 180px; }
+  .nav-links { width: 100%; justify-content: flex-start; gap: 0.75rem; margin-top: 0.75rem; }
+  .nav-links a { font-size: 0.75rem; }
   .rich-grid { grid-template-columns: 1fr; }
   .reader-content { padding: 2rem; padding-top: max(2rem, env(safe-area-inset-top)); }
   .reader-text h2 { font-size: 2rem; }
-  /* Ensure hover-only interactions are disabled on touch devices */
-  .rich-card:hover { transform: none; }
-  .sub-topic-card:hover .st-card-inner { transform: none; }
+  .cyber-greeting-box { padding: 1.75rem; }
+  .cyber-greeting-box p { font-size: 1rem; line-height: 1.6; }
+  .rainbow-btn { width: 100%; padding: 15px 22px; }
+  .subject-toggle { min-width: 0; white-space: normal; }
+  .glass-card { max-width: 100%; }
+  .aspect-video { min-height: 240px; }
+  .tech-logo.w-16.h-16 { width: 3.5rem; height: 3.5rem; }
+  .globe-background { width: min(360px, 90vw); height: min(360px, 90vw); right: -10vw; top: -10vw; }
+  #glow { width: 55vw; height: 55vw; }
+  .rich-card:hover, .sub-topic-card:hover .st-card-inner { transform: none; }
+}
+
+@media (max-width: 480px) {
+  nav { padding: 0.8rem 0.85rem; gap: 0.5rem; }
+  .brand-name { font-size: 1rem; }
+  .nav-links { gap: 0.65rem; }
+  .cyber-greeting-box { padding: 1.25rem; }
+  .rainbow-btn { padding: 14px 18px; }
 }
 
 /* Safe area utility classes for notched phones */

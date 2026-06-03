@@ -568,6 +568,23 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                     <div className="mt-5 text-[10px] text-slate-500 uppercase tracking-[0.3em]">Tip: this popup appears when a topic requires high-precision learning, such as cancer or oncology.</div>
                   </div>
                 )}
+                {!showYouTubePrompt && !youtubeResults.length && !youtubeLoading && !selectedVideo && (
+                  <div className="mb-10 rounded-[36px] border border-white/10 bg-[#04121f] p-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-[9px] uppercase tracking-[0.35em] text-cyan-400 font-black">Video Companion</p>
+                        <h3 className="text-lg font-black text-white">Add YouTube study videos to this chapter</h3>
+                        <p className="mt-2 text-slate-400 text-sm leading-relaxed">Tap to load a curated playlist for this topic and watch videos directly inside the reader.</p>
+                      </div>
+                      <button
+                        onClick={() => fetchYouTubeVideos(query)}
+                        className="px-5 py-3 rounded-3xl bg-gradient-to-r from-cyan-500 to-blue-500 text-black text-[11px] font-black uppercase tracking-[0.3em] hover:from-cyan-400 hover:to-blue-400 transition-all"
+                      >
+                        Show topic videos
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {youtubeResults.length > 0 && (
                   <div className="mb-10 rounded-[36px] border border-cyan-500/20 bg-[#04121f] p-6">
                     <div className="flex items-center justify-between gap-4 mb-4">
