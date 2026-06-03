@@ -588,16 +588,6 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
 
   const toggleConversationMode = (enabled: boolean) => {
     if (enabled) {
-      if (!speechRecognitionAvailable || !speechSynthesisAvailable) {
-        const missingFeatureMessage: Message = {
-          id: generateId(),
-          role: 'assistant',
-          content: "### ⚠️ Voice Mode Unavailable\nYour browser does not support the full speech APIs required for live voice conversation. Please try a modern browser or continue in text mode."
-        };
-        setMessages(prev => [...prev, missingFeatureMessage]);
-        return;
-      }
-
       if (!audioContextRef.current) {
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
@@ -618,10 +608,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
         clearTimeout(listeningRestartTimerRef.current);
         listeningRestartTimerRef.current = null;
       }
-      try {
-        recognitionRef.current?.stop();
-      } catch {}
-      recognitionRef.current = null;
+      recognitionRef.current?.stop();
       if (conversationTimerRef.current) {
         clearInterval(conversationTimerRef.current);
         conversationTimerRef.current = null;
@@ -674,13 +661,6 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
       toggleConversationMode(false);
     }
   }, [externalOpen]);
-
-  useEffect(() => {
-    if (!isOpen && isConversationMode) {
-      toggleConversationMode(false);
-    }
-  }, [isOpen]);
-
   const bootCycleRef = useRef(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() =>
     typeof window === 'undefined' ? true : !window.matchMedia('(max-width: 767px)').matches
@@ -713,9 +693,6 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
   const micStreamRef = useRef<MediaStream | null>(null);
 
   const [isAstraSpeaking, setIsAstraSpeaking] = useState(false);
-
-  const speechRecognitionAvailable = typeof window !== 'undefined' && (!!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition));
-  const speechSynthesisAvailable = typeof window !== 'undefined' && typeof window.speechSynthesis !== 'undefined' && typeof SpeechSynthesisUtterance !== 'undefined';
 
   const isConversationModeRef = useRef(false);
   const isAstraSpeakingRef = useRef(false);
@@ -776,21 +753,8 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
           audioContextRef.current = null;
         }
       } catch {}
-      if (listeningRestartTimerRef.current) {
-        clearTimeout(listeningRestartTimerRef.current);
-        listeningRestartTimerRef.current = null;
-      }
-      if (conversationTimerRef.current) {
-        clearInterval(conversationTimerRef.current);
-        conversationTimerRef.current = null;
-      }
       setIsListening(false);
-      setIsConversationMode(false);
       setIsAstraSpeaking(false);
-      isConversationModeRef.current = false;
-      isAstraSpeakingRef.current = false;
-      setIsOpen(false);
-      onStateChangeRef.current?.(false);
     };
 
     window.addEventListener('axa-terminate-audio', handleTerminate);
@@ -962,18 +926,6 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
   }, []);
 
   const toggleListening = () => {
-    if (!speechRecognitionAvailable) {
-      setMessages(prev => [
-        ...prev,
-        {
-          id: generateId(),
-          role: 'assistant',
-          content: "### ⚠️ Voice Input Unavailable\nYour browser does not support speech recognition. Please use the chat box instead."
-        }
-      ]);
-      return;
-    }
-
     try {
       if (isListening) {
         recognitionRef.current?.stop();
@@ -994,10 +946,6 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
   };
 
   const stopCurrentAudio = () => {
-    try {
-      window.speechSynthesis?.cancel();
-    } catch {}
-
     if (audioSourceRef.current) {
       try {
         audioSourceRef.current.stop();
@@ -1006,9 +954,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
       }
       audioSourceRef.current = null;
     }
-    speechSynthRef.current = null;
     setIsAstraSpeaking(false);
-    isAstraSpeakingRef.current = false;
   };
 
 
@@ -1091,11 +1037,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
           }, ...prev];
         }
         
-        try {
-          localStorage.setItem('lyra_academic_history', JSON.stringify(updated));
-        } catch (e) {
-          console.warn('Failed to save history to localStorage', e);
-        }
+        localStorage.setItem('lyra_academic_history', JSON.stringify(updated));
         return updated;
       });
     }
@@ -1119,11 +1061,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
     e.stopPropagation();
     const updated = sessions.filter(s => s.id !== id);
     setSessions(updated);
-    try {
-      localStorage.setItem('lyra_academic_history', JSON.stringify(updated));
-    } catch (e) {
-      console.warn('Failed to save history to localStorage', e);
-    }
+    localStorage.setItem('lyra_academic_history', JSON.stringify(updated));
     if (activeSessionId === id) {
       startNewSession();
     }
@@ -1375,6 +1313,19 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
             exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
             className="fixed inset-0 z-[420] bg-black/60 flex flex-col md:flex-row overflow-hidden font-sans selection:bg-blue-500/20 h-[100dvh]"
           >
+            <button
+              onClick={() => {
+                window.speechSynthesis?.cancel();
+                setIsOpen(false);
+                onStateChangeRef.current?.(false);
+              }}
+              className="absolute right-4 top-4 z-[60] inline-flex items-center gap-2 rounded-2xl bg-white/10 border border-white/15 px-4 py-2 text-slate-100 shadow-[0_20px_80px_rgba(15,23,42,0.45)] backdrop-blur-xl transition-all hover:bg-white/15"
+              title="Close chat"
+              aria-label="Close chat"
+            >
+              <X className="w-4 h-4" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em]">Close</span>
+            </button>
             {/* Mobile sidebar backdrop */}
             {isSidebarOpen && (
               <div
@@ -1538,7 +1489,6 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                       onClick={() => {
                         window.speechSynthesis?.cancel();
                         toggleConversationMode(false);
-                        stopCurrentAudio();
                         setIsOpen(false);
                         onStateChangeRef.current?.(false);
                         onOpenAITutor();
@@ -1563,16 +1513,17 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                     <Settings className="w-5 h-5" />
                   </button>
                   <button 
-                    onClick={() => { toggleConversationMode(false); stopCurrentAudio(); setIsOpen(false); onStateChangeRef.current?.(false); }}
-                    className="p-3 hover:bg-white/5 rounded-xl transition-all text-slate-200 hover:text-white"
+                    onClick={() => { window.speechSynthesis?.cancel(); setIsOpen(false); onStateChangeRef.current?.(false); }}
+                    className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-slate-200 hover:text-white flex items-center gap-2"
                     title="Close chat"
                     aria-label="Close chat"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Close</span>
                   </button>
                   <button 
-                    onClick={() => { toggleConversationMode(false); stopCurrentAudio(); setIsOpen(false); onStateChangeRef.current?.(false); }}
-                    className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-red-500/10 transition-all text-slate-200 hover:text-white flex items-center gap-2"
+                    onClick={() => { window.speechSynthesis?.cancel(); setIsOpen(false); onStateChangeRef.current?.(false); }}
+                    className="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/15 transition-all text-slate-200 hover:text-white flex items-center gap-2"
                     title="Terminate session"
                   >
                     <X className="w-4 h-4" />
@@ -1717,8 +1668,6 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                         type="button" 
                         onClick={() => {
                           if (onOpenVoice) {
-                            toggleConversationMode(false);
-                            stopCurrentAudio();
                             setIsOpen(false);
                             onStateChangeRef.current?.(false);
                             onOpenVoice();
@@ -2007,10 +1956,6 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
             }
           } catch {}
           const next = !isOpen;
-          if (!next) {
-            toggleConversationMode(false);
-            stopCurrentAudio();
-          }
           setIsOpen(next);
           onStateChangeRef.current?.(next);
         }}

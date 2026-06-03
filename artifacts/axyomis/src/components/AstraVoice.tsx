@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Mic, Clock, Sparkles } from 'lucide-react';
-import { AstraOrb, GeminiWave, GeminiGlow } from './AstraOrb';
+import { AstraOrb, GeminiWave } from './AstraOrb';
 import { useVoiceConversation } from '../hooks/useVoiceConversation';
 import { useUser } from '../context/UserContext';
 
@@ -71,15 +71,14 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
     ? 'Speak clearly. Astra is capturing your words and will respond immediately.'
     : 'Tap the mic or say anything to begin. Astra can be interrupted while she speaks.';
 
-  if (!isOpen) return null;
-
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[600] flex flex-col overflow-hidden"
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[600] flex flex-col overflow-hidden"
         style={{
           paddingTop: 'max(16px, env(safe-area-inset-top))',
           paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
@@ -129,25 +128,53 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
               {studentName ? `Astra is your premium voice mentor, tailored for ${studentName}.` : 'Astra is your premium voice mentor. Emotionally intelligent and ready to help.'}
             </p>
           </div>
-          <button
-            onClick={handleClose}
-            className="astro-terminate-btn touch-target inline-flex items-center gap-2 px-4 py-3 rounded-2xl text-white transition-all"
-            aria-label="Terminate voice session and close Astra Voice"
-          >
-            <X className="w-4 h-4" />
-            <span className="text-[11px] font-black uppercase tracking-[0.25em]">Terminate</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-3 justify-end">
+            <button
+              onClick={handleClose}
+              className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-slate-200 hover:text-white hover:bg-white/10 transition-all"
+              aria-label="Close Astra Voice"
+              title="Close Astra Voice"
+            >
+              <X className="w-4 h-4" />
+              <span className="text-[11px] font-black uppercase tracking-[0.25em]">Close</span>
+            </button>
+            <button
+              onClick={handleClose}
+              className="astro-terminate-btn touch-target inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-violet-500 text-white shadow-[0_10px_30px_rgba(59,130,246,0.25)] transition-all hover:brightness-110"
+              aria-label="Terminate voice session and close Astra Voice"
+            >
+              <X className="w-4 h-4" />
+              <span className="text-[11px] font-black uppercase tracking-[0.25em]">Terminate</span>
+            </button>
+          </div>
         </div>
+
+        <button
+          onClick={handleClose}
+          className="absolute right-4 top-4 z-50 inline-flex items-center gap-2 rounded-2xl bg-white/10 border border-white/15 px-4 py-2 text-slate-100 shadow-[0_20px_80px_rgba(15,23,42,0.45)] backdrop-blur-xl transition-all hover:bg-white/15"
+          title="Close Astra Voice"
+          aria-label="Close Astra Voice"
+        >
+          <X className="w-4 h-4" />
+          <span className="text-[10px] font-black uppercase tracking-[0.3em]">Close</span>
+        </button>
 
         {/* Center orb */}
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center min-h-0 px-4">
-          <div className="relative flex items-center justify-center w-full max-w-[min(280px,100%)] aspect-square max-h-[min(35vh,240px)] mx-auto">
-            <GeminiGlow state={orbState} size={240} />
-            <AstraOrb state={orbState} size={170} />
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
+            className="relative flex items-center justify-center w-full max-w-[min(320px,100%)] aspect-square max-h-[min(35vh,240px)] mx-auto"
+          >
+            <AstraOrb state={orbState} size={200} />
+          </motion.div>
 
-          <div className="w-full max-w-[min(280px,100%)] mt-4 px-4 mx-auto">
-            <GeminiWave state={orbState} width={260} height={48} />
+          <div className="w-full max-w-[min(340px,100%)] mt-4 px-4 mx-auto">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} transition={{ duration: 0.45, ease: 'easeOut', delay: 0.06 }}>
+              <GeminiWave state={orbState} width={340} height={56} />
+            </motion.div>
           </div>
 
           {/* Status */}
@@ -245,6 +272,7 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
           </span>
         </div>
       </motion.div>
+      )}
     </AnimatePresence>
   );
 };

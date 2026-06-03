@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, type MutableRefObject, Suspense } from 'react';
+import React, { useEffect, useRef, type MutableRefObject } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export type OrbState = 'idle' | 'listening' | 'thinking' | 'speaking';
@@ -96,29 +96,6 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({ state, analyserRef, size = 3
   const ringSpeed = state === 'thinking' ? 4 : state === 'speaking' ? 6 : 18;
   const innerSpeed = state === 'thinking' ? 6 : state === 'speaking' ? 8 : 22;
   const isActive = state !== 'idle';
-
-  // Render WebGL 3D orb on capable environments for a richer effect
-  if (typeof window !== 'undefined') {
-    const AstraOrb3D = React.lazy(() => import('./AstraOrb3D'));
-    return (
-      <Suspense fallback={(
-        <div className="astra-orb-root" style={{ width: size, height: size }}>
-          {/* fallback to existing DOM orb visuals while loading WebGL */}
-          <div
-            ref={haloRef}
-            className="astra-orb-ambient"
-            style={{
-              background: conic,
-              filter: `blur(${isMobile ? 24 : 42}px) saturate(180%)`,
-              opacity: 0.68,
-            }}
-          />
-        </div>
-      )}>
-        <AstraOrb3D state={state} analyserRef={analyserRef} size={size} />
-      </Suspense>
-    );
-  }
 
   return (
     <div className="astra-orb-root" style={{ width: size, height: size }}>
@@ -279,12 +256,22 @@ export const GeminiWave: React.FC<GeminiWaveProps> = ({ state, width = 400, heig
   }, [state, width, height]);
 
   return (
-    <canvas
+    <motion.canvas
       ref={canvasRef}
       width={width}
       height={height}
-      className="w-full"
-      style={{ maxWidth: width, opacity: state === 'idle' ? 0.4 : 0.85, transition: 'opacity 600ms ease' }}
+      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+      animate={{ opacity: state === 'idle' ? 0.45 : 0.95, y: 0, scale: 1 }}
+      transition={{ duration: 0.75, ease: 'easeOut' }}
+      className="w-full rounded-[30px] overflow-hidden"
+      style={{
+        maxWidth: width,
+        boxShadow: '0 0 60px rgba(56,189,248,0.18)',
+        opacity: state === 'idle' ? 0.4 : 0.92,
+        transition: 'opacity 600ms ease',
+        background: 'rgba(15, 23, 42, 0.45)',
+        borderRadius: '30px',
+      }}
     />
   );
 };
