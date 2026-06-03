@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageSquare, Send, X, User, Sparkles, Plus, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, History, Menu, LayoutGrid, Settings, HelpCircle, ThumbsUp, ThumbsDown, Activity, Cpu, ExternalLink, GraduationCap, ChevronRight } from 'lucide-react';
+import { MessageSquare, Send, X, User, Sparkles, Plus, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, History, Menu, LayoutGrid, Settings, HelpCircle, ThumbsUp, ThumbsDown, Activity, Cpu, ExternalLink, GraduationCap, ChevronRight, Minimize2 } from 'lucide-react';
 import { fetchMultilingualVideos, VideoGroup, YouTubeVideo } from '../services/youtubeService';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -576,6 +576,7 @@ interface ChatbotProps {
 export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, hideToggle, onOpenAITutor, onOpenVoice }) => {
   const { effectiveTier } = useUser();
   const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   const onStateChangeRef = useRef(onStateChange);
   useEffect(() => {
@@ -1313,6 +1314,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
             exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
             className="fixed inset-0 z-[420] bg-black/60 flex flex-col md:flex-row overflow-hidden font-sans selection:bg-blue-500/20 h-[100dvh]"
           >
+            {!isMinimized && (
             <button
               onClick={() => {
                 window.speechSynthesis?.cancel();
@@ -1326,6 +1328,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
               <X className="w-4 h-4" />
               <span className="text-[10px] font-black uppercase tracking-[0.3em]">Close</span>
             </button>
+            )}
             {/* Mobile sidebar backdrop */}
             {isSidebarOpen && (
               <div
@@ -1433,7 +1436,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
             </motion.div>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col h-full bg-[#050505] relative">
+            <div className={isMinimized ? 'hidden' : 'flex-1 flex flex-col h-full bg-[#050505] relative'}>
               <AnimatePresence>
                 {showBootSequence && (
                   <motion.div
@@ -1512,25 +1515,38 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                   >
                     <Settings className="w-5 h-5" />
                   </button>
-                  <button 
-                    onClick={() => { window.speechSynthesis?.cancel(); setIsOpen(false); onStateChangeRef.current?.(false); }}
-                    className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-slate-200 hover:text-white flex items-center gap-2"
-                    title="Close chat"
-                    aria-label="Close chat"
-                  >
-                    <X className="w-4 h-4" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Close</span>
-                  </button>
-                  <button 
-                    onClick={() => { window.speechSynthesis?.cancel(); setIsOpen(false); onStateChangeRef.current?.(false); }}
-                    className="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/15 transition-all text-slate-200 hover:text-white flex items-center gap-2"
-                    title="Terminate session"
-                  >
-                    <X className="w-4 h-4" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Terminate</span>
-                  </button>
+                    {!isMinimized && (
+                      <>
+                        <button 
+                          onClick={() => { setIsMinimized(true); }}
+                          className="px-3 py-2 rounded-xl bg-white/6 border border-white/10 hover:bg-white/10 transition-all text-slate-200 hover:text-white flex items-center gap-2"
+                          title="Cut chat"
+                          aria-label="Cut chat"
+                        >
+                          <Minimize2 className="w-4 h-4 rotate-90" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Cut</span>
+                        </button>
+                        <button 
+                          onClick={() => { window.speechSynthesis?.cancel(); setIsOpen(false); onStateChangeRef.current?.(false); }}
+                          className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-slate-200 hover:text-white flex items-center gap-2"
+                          title="Close chat"
+                          aria-label="Close chat"
+                        >
+                          <X className="w-4 h-4" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Close</span>
+                        </button>
+                        <button 
+                          onClick={() => { window.speechSynthesis?.cancel(); setIsOpen(false); onStateChangeRef.current?.(false); }}
+                          className="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/15 transition-all text-slate-200 hover:text-white flex items-center gap-2"
+                          title="Terminate session"
+                        >
+                          <X className="w-4 h-4" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Terminate</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
 
               {/* Interaction View — centered chat */}
               <div className="flex-1 w-full flex flex-col items-center overflow-y-auto scrollbar-none px-6 py-12 h-0 relative scroll-smooth" id="chat-scroll-container">
@@ -1700,6 +1716,30 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                 </div>
               </div>
             </div>
+            {isMinimized && (
+              <div className="fixed right-6 bottom-6 z-[999] flex items-center gap-2 rounded-full bg-black/70 border border-white/10 p-2 shadow-[0_15px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+                <button
+                  onClick={() => setIsMinimized(false)}
+                  className="inline-flex items-center justify-center rounded-full bg-white/10 p-3 text-white hover:bg-white/15 transition"
+                  title="Restore chat"
+                  aria-label="Restore chat"
+                >
+                  <Minimize2 className="w-5 h-5 rotate-180" />
+                </button>
+                <button
+                  onClick={() => {
+                    window.speechSynthesis?.cancel();
+                    setIsOpen(false);
+                    onStateChangeRef.current?.(false);
+                  }}
+                  className="inline-flex items-center justify-center rounded-full bg-red-500/10 p-3 text-white hover:bg-red-500/15 transition"
+                  title="Close chat"
+                  aria-label="Close chat"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
