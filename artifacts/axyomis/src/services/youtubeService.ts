@@ -1,12 +1,8 @@
 import axios from 'axios';
+import type { VideoMetadata } from './youtubeQualityService';
 
-export interface YouTubeVideo {
-  id: string;
-  title: string;
-  thumbnail: string;
-  channelTitle: string;
-  publishedAt: string;
-  description: string;
+export interface YouTubeVideo extends VideoMetadata {
+  thumbnail?: string;
 }
 
 export interface VideoGroup {

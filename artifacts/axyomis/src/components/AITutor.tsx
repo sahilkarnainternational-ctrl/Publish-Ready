@@ -9,6 +9,7 @@ import {
 import { useUser } from '../context/UserContext';
 import { UpgradeModal } from './UpgradeModal';
 import { logActivity } from '../services/activityService';
+import { safeSessionStorageGet, safeSessionStorageSet } from '../lib/safeStorage';
 import { fetchMultilingualVideos, VideoGroup } from '../services/youtubeService';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -149,7 +150,7 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat, o
   useEffect(() => {
     if (!isOpen || !selectedSubject) return;
     const key = `fact_${selectedSubject}_${getDayOfYear()}`;
-    const cached = sessionStorage.getItem(key);
+    const cached = safeSessionStorageGet(key);
     if (cached) { setFactOfDay(cached); return; }
     const fallbacks = SUBJECT_FACTS[selectedSubject] || SUBJECT_FACTS.Science;
     // Show fallback immediately, then try to fetch a fresh one
@@ -158,7 +159,7 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat, o
       'You are a science educator.',
       `Give ONE fascinating, accurate, and surprising fact about ${selectedSubject} appropriate for a ${effectiveClass} student. Keep it to 1-2 sentences. No intro like "Did you know" — just the fact directly.`
     ).then(f => {
-      if (f.trim()) { setFactOfDay(f.trim()); sessionStorage.setItem(key, f.trim()); }
+      if (f.trim()) { setFactOfDay(f.trim()); safeSessionStorageSet(key, f.trim()); }
     }).catch(() => {});
   }, [isOpen, selectedSubject, effectiveClass]);
 

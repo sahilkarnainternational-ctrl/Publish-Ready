@@ -1265,7 +1265,9 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
       } catch (e) {
         console.warn('Video fetch failed', e);
       }
-
+        // NOTE: YouTube video fetching disabled for chatbot
+        // Videos are now exclusive to the Chapter Reader for focused learning paths
+        // This keeps the chatbot focused on pure conversational AI assistance
   } catch (error: any) {
       console.error("Chatbot Error:", error);
       setIsAnalyzing(false);
@@ -1611,7 +1613,8 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
                                     isSpeaking={idx === messages.length - 1 && isAstraSpeaking}
                                   />
                                   {!m.isStreaming && <GroundingSources metadata={m.groundingMetadata} />}
-                                  {!m.isStreaming && m.videoData && <YouTubeGallery videoData={m.videoData} />}
+                                    {/* YouTube videos disabled in chatbot - exclusive to Chapter Reader */}
+                                    {false && m.videoData && <YouTubeGallery videoData={m.videoData} />}
                                 </div>
                               </div>
                             ) : (

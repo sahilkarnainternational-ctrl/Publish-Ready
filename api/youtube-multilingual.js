@@ -23,15 +23,47 @@ const LANG_CONFIG = {
   },
 };
 
+function parseDurationToMinutes(duration) {
+  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/i);
+  if (!match) return 0;
+  const hours = Number(match[1] || 0);
+  const minutes = Number(match[2] || 0);
+  const seconds = Number(match[3] || 0);
+  return Math.round(hours * 60 + minutes + seconds / 60);
+}
+
 function mapItems(items) {
   return items.map((item) => ({
     id: item.id.videoId,
     title: item.snippet.title,
     thumbnail: item.snippet.thumbnails?.medium?.url || '',
+    thumbnailUrl: item.snippet.thumbnails?.medium?.url || '',
     channelTitle: item.snippet.channelTitle,
     publishedAt: item.snippet.publishedAt,
     description: item.snippet.description || '',
+    duration: 0,
+    viewCount: 0,
   }));
+}
+
+async function fetchVideoDetails(ids, apiKey) {
+  if (!ids || ids.length === 0) return {};
+  const params = new URLSearchParams({
+    part: 'contentDetails,statistics',
+    id: ids.join(','),
+    key: apiKey,
+  });
+
+  const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?${params}`);
+  const data = await response.json();
+
+  return (data.items || []).reduce((map, item) => {
+    map[item.id] = {
+      duration: parseDurationToMinutes(item.contentDetails?.duration || ''),
+      viewCount: Number(item.statistics?.viewCount || 0),
+    };
+    return map;
+  }, {});
 }
 
 export default async function handler(req, res) {
@@ -79,8 +111,17 @@ export default async function handler(req, res) {
       const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
       const data = await response.json();
       const items = data.items || [];
-      const mapped = mapItems(items).filter(cfg.filter);
-      return mapped.length > 0 ? mapped.slice(0, 12) : mapItems(items).slice(0, 8);
+      const mapped = mapItems(items);
+      const ids = mapped.map(item => item.id).filter(Boolean);
+      const details = await fetchVideoDetails(ids, apiKey);
+      const enriched = mapped.map(video => ({
+        ...video,
+        thumbnailUrl: video.thumbnailUrl || video.thumbnail || '',
+        duration: details[video.id]?.duration ?? 0,
+        viewCount: details[video.id]?.viewCount ?? 0,
+      }));
+      const filtered = enriched.filter(cfg.filter);
+      return filtered.length > 0 ? filtered.slice(0, 12) : enriched.slice(0, 8);
     };
 
     const [english, hindi, nepali] = await Promise.allSettled([

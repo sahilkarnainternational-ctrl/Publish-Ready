@@ -5,6 +5,10 @@ import { UserProvider } from './context/UserContext.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import './index.css';
 import 'katex/dist/katex.min.css';
+import { setupGlobalErrorHandling } from './services/errorHandler.ts';
+
+// Initialize global error handling
+setupGlobalErrorHandling();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

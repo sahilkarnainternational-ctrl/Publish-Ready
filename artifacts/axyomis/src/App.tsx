@@ -363,7 +363,6 @@ export default function App() {
 
           <div id="card" className="flex-1 relative flex justify-center items-center h-[400px] sm:h-[550px] w-full z-10 transition-all duration-500 ease-out hover:scale-105 hover:rotate-1 group/spline">
             <div className="glass-card w-full max-w-[450px] h-full bg-[var(--glass-bg)] rounded-[30px] border border-[var(--glass-border)] backdrop-blur-3xl shadow-2xl overflow-hidden relative group-hover/spline:shadow-[0_0_80px_rgba(34,211,238,0.2)] group-hover/spline:border-[var(--accent)]/50 transition-all duration-500">
-              {/* @ts-ignore */}
               <spline-viewer url="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"></spline-viewer>
               <div className="absolute bottom-8 left-8 right-8 pointer-events-none group-hover/spline:translate-y-[-4px] transition-transform duration-500">
                 <h1 className="text-white text-3xl font-bold tracking-widest uppercase mb-1 font-['Rajdhani']">Lyra AI</h1>

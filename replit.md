@@ -4,8 +4,9 @@ A high-fidelity biomedical OS and scientific intelligence platform — explore t
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/axyomis run dev` — run the frontend (Vite, port assigned via PORT env)
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `pnpm run dev` — unified dev proxy on port 4174 (`/api` → API on 8080, UI → Vite on 4173). Start API + frontend first: `pnpm run dev:api` and `pnpm run dev:frontend`.
+- `pnpm run dev:frontend` — Vite frontend (default port 4173; proxies `/api` to `http://127.0.0.1:8080`)
+- `pnpm run dev:api` — API server on port 8080
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
