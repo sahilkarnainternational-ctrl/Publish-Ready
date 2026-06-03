@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Mic, Clock, Sparkles } from 'lucide-react';
+import { X, Mic, Clock, Sparkles, Minimize2 } from 'lucide-react';
 import { AstraOrb, GeminiWave } from './AstraOrb';
 import { useVoiceConversation } from '../hooks/useVoiceConversation';
 import { useUser } from '../context/UserContext';
@@ -31,6 +31,8 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
     stopAll,
     sessionExpired,
   } = useVoiceConversation(isOpen);
+  const [isMinimized, setIsMinimized] = React.useState(false);
+
   const { studentProfile } = useUser();
   const studentName = studentProfile?.studentName?.trim();
 
@@ -130,6 +132,15 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
           </div>
           <div className="flex flex-wrap items-center gap-3 justify-end">
             <button
+              onClick={() => setIsMinimized(true)}
+              className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-slate-200 hover:text-white hover:bg-white/10 transition-all"
+              aria-label="Cut Astra Voice"
+              title="Cut Astra Voice"
+            >
+              <Minimize2 className="w-4 h-4" />
+              <span className="text-[11px] font-black uppercase tracking-[0.25em]">Cut</span>
+            </button>
+            <button
               onClick={handleClose}
               className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-slate-200 hover:text-white hover:bg-white/10 transition-all"
               aria-label="Close Astra Voice"
@@ -149,6 +160,7 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
+        {!isMinimized && (
         <button
           onClick={handleClose}
           className="absolute right-4 top-4 z-50 inline-flex items-center gap-2 rounded-2xl bg-white/10 border border-white/15 px-4 py-2 text-slate-100 shadow-[0_20px_80px_rgba(15,23,42,0.45)] backdrop-blur-xl transition-all hover:bg-white/15"
@@ -158,18 +170,42 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
           <X className="w-4 h-4" />
           <span className="text-[10px] font-black uppercase tracking-[0.3em]">Close</span>
         </button>
+        )}
 
-        {/* Center orb */}
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center min-h-0 px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            transition={{ duration: 0.45, ease: 'easeOut' }}
-            className="relative flex items-center justify-center w-full max-w-[min(320px,100%)] aspect-square max-h-[min(35vh,240px)] mx-auto"
-          >
-            <AstraOrb state={orbState} size={200} />
-          </motion.div>
+        {isMinimized && (
+          <div className="fixed right-6 bottom-6 z-[999] flex items-center gap-3 rounded-full bg-black/70 border border-white/10 p-2 shadow-[0_15px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+            <button
+              onClick={() => setIsMinimized(false)}
+              className="inline-flex items-center justify-center rounded-full bg-white/10 p-3 text-white hover:bg-white/15 transition"
+              title="Restore Astra Voice"
+              aria-label="Restore Astra Voice"
+            >
+              <Minimize2 className="w-5 h-5 rotate-180" />
+            </button>
+            <button
+              onClick={handleClose}
+              className="inline-flex items-center justify-center rounded-full bg-red-500/10 p-3 text-white hover:bg-red-500/15 transition"
+              title="Close Astra Voice"
+              aria-label="Close Astra Voice"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
+        {!isMinimized && (
+          <>
+            {/* Center orb */}
+            <div className="relative z-10 flex-1 flex flex-col items-center justify-center min-h-0 px-4">
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 12 }}
+                transition={{ duration: 0.45, ease: 'easeOut' }}
+                className="relative flex items-center justify-center w-full max-w-[min(320px,100%)] aspect-square max-h-[min(35vh,240px)] mx-auto"
+              >
+                <AstraOrb state={orbState} size={200} />
+              </motion.div>
 
           <div className="w-full max-w-[min(340px,100%)] mt-4 px-4 mx-auto">
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} transition={{ duration: 0.45, ease: 'easeOut', delay: 0.06 }}>
@@ -258,6 +294,8 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
             </AnimatePresence>
           </div>
         </div>
+          </>
+        )}
 
         {/* Footer indicators */}
         <div className="relative z-10 flex items-center justify-center gap-8 pb-4 text-[9px] font-black uppercase tracking-widest text-slate-600">
