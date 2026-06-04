@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Play, Youtube, Clock, Eye, TrendingUp, ChevronRight, AlertCircle, Loader } from 'lucide-react';
 import { useUser } from '../context/UserContext';
+import { VideoPlayer } from './VideoPlayer';
 import { fetchMultilingualVideos, VideoGroup } from '../services/youtubeService';
 import type { VideoMetadata } from '../services/youtubeQualityService';
 import {
@@ -208,15 +209,10 @@ export const ChapterYouTubeWidget: React.FC<ChapterYouTubeWidgetProps> = ({ topi
                     className="mt-4 pt-4 border-t border-white/[0.05]"
                   >
                     <div className="aspect-video bg-black/40 rounded-lg overflow-hidden">
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        src={`https://www.youtube.com/embed/${video.id}?autoplay=0&rel=0&modestbranding=1`}
+                      <VideoPlayer
+                        videoId={video.id}
                         title={video.title}
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="w-full h-full"
+                        className="h-full"
                       />
                     </div>
                     <a

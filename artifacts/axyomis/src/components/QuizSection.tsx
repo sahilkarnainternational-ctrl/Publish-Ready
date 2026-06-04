@@ -4,6 +4,7 @@ import { CheckCircle2, XCircle, BrainCircuit, ChevronRight, RefreshCw, Trophy, T
 import allQuizData from '../data/axyomis_full_quiz.json';
 import { useUser } from '../context/UserContext';
 import { UpgradeModal } from './UpgradeModal';
+import { MarkdownRenderer } from './MarkdownRenderer';
 import {
   safeLocalStorageGet,
   safeLocalStorageRemove,
@@ -44,18 +45,11 @@ interface SessionResult {
   questionText: string;
 }
 
-const MathJaxText: React.FC<{ content?: string; className?: string }> = ({ content, className }) => {
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const displayContent = content || 'No rationale available.';
-
-  useEffect(() => {
-    if (containerRef.current && (window as any).MathJax?.typesetPromise) {
-      (window as any).MathJax.typesetPromise([containerRef.current]);
-    }
-  }, [displayContent]);
-
-  return <div ref={containerRef} className={className}>{displayContent}</div>;
-};
+const MarkdownText: React.FC<{ content?: string; className?: string }> = ({ content, className }) => (
+  <div className={className}>
+    <MarkdownRenderer>{content ?? 'No rationale available.'}</MarkdownRenderer>
+  </div>
+);
 
 export const QuizSection: React.FC = () => {
   const { isPremium, isTrialActive } = useUser() as any;
@@ -510,7 +504,7 @@ export const QuizSection: React.FC = () => {
                       <p className="text-sm text-slate-300 font-medium mb-4 leading-relaxed">{res.questionText}</p>
                       <div className="bg-black/30 p-4 rounded-xl border border-white/5">
                         <span className="text-xs text-red-400 font-bold uppercase tracking-widest mb-2 block">Correction</span>
-                        <MathJaxText className="text-sm text-slate-400 font-light" content={res.explanation} />
+                        <MarkdownText className="text-sm text-slate-400 font-light" content={res.explanation} />
                       </div>
                     </div>
                   ))}
@@ -647,7 +641,7 @@ export const QuizSection: React.FC = () => {
                       <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-3 flex items-center gap-2">
                         <BrainCircuit className="w-3 h-3" /> Synthesis Rationale
                       </h4>
-                      <MathJaxText className="text-sm text-blue-100/70 leading-relaxed font-light" content={currentQ.explanation} />
+                      <MarkdownText className="text-sm text-blue-100/70 leading-relaxed font-light" content={currentQ.explanation} />
                     </div>
 
                     <div className="shrink-0">

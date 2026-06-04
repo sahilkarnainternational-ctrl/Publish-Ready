@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import MobileDialogWrapper from './MobileDialogWrapper';
 import {
   ChevronRight, ChevronLeft, GraduationCap, BookOpen, Atom, FlaskConical, Dna, Telescope,

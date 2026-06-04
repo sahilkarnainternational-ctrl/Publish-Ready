@@ -2,10 +2,8 @@ import React, { useState, useRef, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, Send, X, User, Sparkles, Plus, Mic, MicOff, Volume2, VolumeX, Image as ImageIcon, History, Menu, LayoutGrid, Settings, HelpCircle, ThumbsUp, ThumbsDown, Activity, Cpu, ExternalLink, GraduationCap, ChevronRight, Minimize2 } from 'lucide-react';
 import { fetchMultilingualVideos, VideoGroup, YouTubeVideo } from '../services/youtubeService';
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
+import { MarkdownRenderer } from './MarkdownRenderer';
+import { VideoPlayer } from './VideoPlayer';
 
 let _mermaidReady = false;
 const ensureMermaid = async () => {
@@ -305,19 +303,11 @@ const YouTubeGallery: React.FC<{ videoData?: VideoGroup }> = ({ videoData }) => 
                        </button>
                     </div>
                   ) : (
-                    <iframe 
+                    <VideoPlayer
                       key={playingVideo.id}
-                      src={`https://www.youtube.com/embed/${playingVideo.id}?autoplay=1&rel=0&modestbranding=1&showinfo=0`} 
-                      className="w-full h-full border-0 absolute inset-0" 
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                      allowFullScreen
-                      onError={() => {
-                        if (!navigator.onLine) {
-                          setPlaybackError("Network unavailable. Please check your signal.");
-                        } else {
-                          setPlaybackError("This content may be restricted in your region, private, or contains unsupported media codecs.");
-                        }
-                      }}
+                      videoId={playingVideo.id}
+                      title={playingVideo.title}
+                      className="absolute inset-0"
                     />
                   )}
                 </div>
@@ -402,9 +392,7 @@ const NeuralStream: React.FC<{ content: string; isStreaming: boolean; groundingM
         </motion.div>
       )}
       <div className="relative z-10">
-        <Markdown 
-          remarkPlugins={[remarkGfm, remarkMath]} 
-          rehypePlugins={[rehypeKatex]}
+        <MarkdownRenderer
           components={{
             code({ node, inline, className, children, ...props }: any) {
               const match = /language-(\w+)/.exec(className || '');
@@ -416,7 +404,7 @@ const NeuralStream: React.FC<{ content: string; isStreaming: boolean; groundingM
           }}
         >
           {content}
-        </Markdown>
+        </MarkdownRenderer>
       </div>
     </div>
   );

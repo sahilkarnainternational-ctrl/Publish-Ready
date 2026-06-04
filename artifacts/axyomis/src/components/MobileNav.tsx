@@ -3,6 +3,8 @@ import { Menu, X, Brain, Volume2, User as UserIcon, GraduationCap } from 'lucide
 import { motion, AnimatePresence } from 'motion/react';
 
 interface MobileNavProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
   onOpenTutor: () => void;
   onOpenVoice: () => void;
   onOpenProfile: () => void;
@@ -13,6 +15,8 @@ interface MobileNavProps {
 }
 
 export const MobileNav: React.FC<MobileNavProps> = ({
+  isOpen,
+  onOpenChange,
   onOpenTutor,
   onOpenVoice,
   onOpenProfile,
@@ -21,21 +25,20 @@ export const MobileNav: React.FC<MobileNavProps> = ({
   photoURL,
   isPremium,
 }) => {
-  const [open, setOpen] = useState(false);
   const [fromBottom, setFromBottom] = useState(false);
 
   const action = (fn: () => void) => {
-    setOpen(false);
+    onOpenChange(false);
     fn();
   };
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    document.body.style.overflow = open ? 'hidden' : '';
+    document.body.style.overflow = isOpen ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
-  }, [open]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -48,23 +51,23 @@ export const MobileNav: React.FC<MobileNavProps> = ({
   return (
     <>
       <button
-        onClick={() => setOpen((state) => !state)}
-        aria-expanded={open}
+        onClick={() => onOpenChange(!isOpen)}
+        aria-expanded={isOpen}
         className="md:hidden touch-target p-2.5 rounded-xl bg-white/5 border border-white/10 text-white"
-        aria-label={open ? 'Close menu' : 'Open menu'}
+        aria-label={isOpen ? 'Close menu' : 'Open menu'}
       >
-        {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
 
       <AnimatePresence>
-        {open && (
+        {isOpen && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm md:hidden"
-              onClick={() => setOpen(false)}
+              onClick={() => onOpenChange(false)}
             />
             <motion.div
               initial={fromBottom ? { y: '100%' } : { x: '100%' }}
@@ -82,7 +85,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Menu</span>
-                <button onClick={() => setOpen(false)} className="touch-target p-2 rounded-lg text-slate-400">
+                <button onClick={() => onOpenChange(false)} className="touch-target p-2 rounded-lg text-slate-400">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -115,7 +118,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
                   <a
                     key={link.href}
                     href={link.href}
-                    onClick={() => setOpen(false)}
+                    onClick={() => onOpenChange(false)}
                     className="block px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wider text-slate-400 hover:text-white hover:bg-white/5"
                   >
                     {link.label}

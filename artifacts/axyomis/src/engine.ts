@@ -541,7 +541,7 @@ export class AxyomisEngine {
           imgWrapper.innerHTML = `<div class="text-center font-mono opacity-20"><i class="fas fa-book-open text-6xl mb-4"></i><br>NO VISUAL</div>`;
         }
         
-        if ((window as any).MathJax?.typesetPromise) (window as any).MathJax.typesetPromise([extract]);
+        // No legacy MathJax rendering needed for the current markdown/math pipeline.
     }
   }
 
@@ -569,7 +569,7 @@ export class AxyomisEngine {
               </div>
             </div>
             <div class='relative aspect-video bg-black'>
-              <iframe id="video-iframe" src='https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1' class='w-full h-full border-0 absolute inset-0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe>
+              <iframe id="video-iframe" src='https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1' class='w-full h-full border-0 absolute inset-0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe>
             </div>
             <div class="p-6 md:p-8 bg-[#0a0a0c]">
                <h4 class="text-[10px] font-black text-cyan-400 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">

@@ -1,10 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { HelpCircle, Send, ImagePlus, X, Loader2, Lightbulb, ChevronDown, ChevronUp, Globe } from 'lucide-react';
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 async function groqChat(prompt: string): Promise<string> {
   const res = await fetch('/api/chat', {
@@ -268,9 +265,9 @@ ${imageBase64 ? '[Note: Student attached an image — describe what you understa
                       <Lightbulb className="w-3.5 h-3.5 text-green-400" />
                     </div>
                     <div className="flex-1 min-w-0 prose prose-invert prose-sm max-w-none prose-headings:text-violet-400 prose-headings:font-black prose-headings:uppercase prose-headings:tracking-wider prose-strong:text-white prose-code:text-violet-300 prose-code:bg-white/5 prose-code:rounded prose-code:px-1">
-                      <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
+                      <MarkdownRenderer>
                         {doubt.answer}
-                      </Markdown>
+                      </MarkdownRenderer>
                     </div>
                   </div>
                 </motion.div>

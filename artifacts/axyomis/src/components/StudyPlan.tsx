@@ -4,8 +4,6 @@ import { Calendar, Clock, Target, BookOpen, ChevronRight, Loader2, Sparkles, Cro
 import { GoogleGenAI } from '@google/genai';
 import { useUser } from '../context/UserContext';
 import { UpgradeModal } from './UpgradeModal';
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : undefined) || '';
 const genAI = GEMINI_KEY ? new GoogleGenAI({ apiKey: GEMINI_KEY }) : null;

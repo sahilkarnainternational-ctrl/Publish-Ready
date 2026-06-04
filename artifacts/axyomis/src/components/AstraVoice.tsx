@@ -39,14 +39,10 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (!isOpen) return;
     document.body.style.overflow = 'hidden';
-    window.history.pushState({ astraVoice: true }, '');
-    const onPop = () => onClose();
-    window.addEventListener('popstate', onPop);
     return () => {
       document.body.style.overflow = '';
-      window.removeEventListener('popstate', onPop);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   const handleClose = () => {
     stopAll();

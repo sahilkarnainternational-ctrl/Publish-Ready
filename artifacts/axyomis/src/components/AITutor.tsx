@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import MobileDialogWrapper from './MobileDialogWrapper';
 import {
   X, BookOpen, Video, Brain, ClipboardList, ChevronRight, ChevronLeft,
@@ -12,10 +12,8 @@ import { UpgradeModal } from './UpgradeModal';
 import { logActivity } from '../services/activityService';
 import { safeSessionStorageGet, safeSessionStorageSet } from '../lib/safeStorage';
 import { fetchMultilingualVideos, VideoGroup } from '../services/youtubeService';
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
+import { MarkdownRenderer } from './MarkdownRenderer';
+import { VideoPlayer } from './VideoPlayer';
 import { DoubtsSection } from './DoubtsSection';
 import { CORE_COURSES, getCourseUnits, type CoreSubject } from '../data/curriculum';
 
@@ -123,14 +121,11 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat, o
   const effectiveClass: string = classLevel || 'Grade 10';
   const country = studentProfile?.country || 'Nepal';
 
-  // Android/iOS back button support
+  // Controlled modal state only; do not manipulate browser history.
   useEffect(() => {
     if (!isOpen) return;
-    window.history.pushState({ tutorOpen: true }, '');
-    const handler = () => { onClose(); };
-    window.addEventListener('popstate', handler);
-    return () => window.removeEventListener('popstate', handler);
-  }, [isOpen, onClose]);
+    return () => undefined;
+  }, [isOpen]);
 
   // Set default subject
   useEffect(() => {
@@ -561,9 +556,9 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat, o
                               </button>
                             )}
                             <div className="prose prose-invert prose-sm max-w-none prose-headings:font-black prose-headings:uppercase prose-headings:tracking-wider prose-headings:text-cyan-400 prose-strong:text-white prose-code:text-cyan-300 prose-code:bg-white/5 prose-code:rounded prose-code:px-1 prose-p:text-slate-300 prose-li:text-slate-300">
-                              <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
+                              <MarkdownRenderer>
                                 {lessonContent}
-                              </Markdown>
+                              </MarkdownRenderer>
                             </div>
                           </motion.div>
                         )}
@@ -571,7 +566,7 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat, o
                           <motion.div key="summary" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
                             {!canAccessPremium ? <PremiumGate feature="AI Chapter Summaries" /> : summaryContent ? (
                               <div className="prose prose-invert prose-sm max-w-none prose-headings:font-black prose-headings:uppercase prose-headings:tracking-wider prose-headings:text-amber-400 prose-strong:text-white prose-p:text-slate-300 prose-li:text-slate-300">
-                                <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>{summaryContent}</Markdown>
+                                <MarkdownRenderer>{summaryContent}</MarkdownRenderer>
                               </div>
                             ) : null}
                           </motion.div>
@@ -701,14 +696,10 @@ function VideoPanel({ videos, subject, chapter, classLevel }: { videos: VideoGro
                 </div>
               ) : (
                 <>
-                  <iframe
-                    key={`${active.id}-${lang}`}
-                    src={`https://www.youtube.com/embed/${active.id}?autoplay=1&rel=0&modestbranding=1&showinfo=0`}
+                  <VideoPlayer
+                    videoId={active.id}
                     title={active.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    className="absolute inset-0 w-full h-full border-0"
-                    onError={() => setVideoError(true)}
+                    className="absolute inset-0"
                   />
                   {/* Subtle notice */}
                   <button

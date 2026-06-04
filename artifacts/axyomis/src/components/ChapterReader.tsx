@@ -5,14 +5,11 @@ import {
   Layers, Sparkles, Info, Quote, Lightbulb, Brain, Clock,
   ArrowRight, Bookmark, Share2, FileText, ListChecks
 } from 'lucide-react';
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
 import { useUser } from '../context/UserContext';
+import { VideoPlayer } from './VideoPlayer';
+import { MarkdownRenderer } from './MarkdownRenderer';
 import { DATA_SETS } from '../constants';
 import { loadChapter, type BookChapter } from '../services/chapterCache';
-import { useEffect } from 'react';
 
 
 // Mermaid is large; load dynamically when diagrams are rendered to keep initial
@@ -640,14 +637,12 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                     )}
                     {selectedVideo && (
                       <div className="mt-6 aspect-video rounded-3xl overflow-hidden border border-white/10 bg-black">
-                        <iframe
-                          src={`https://www.youtube.com/embed/${selectedVideo}?autoplay=1&rel=0&modestbranding=1`}
-                          title="YouTube study video"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          className="w-full h-full"
-                        />
-                      </div>
+                      <VideoPlayer
+                        videoId={selectedVideo}
+                        title="YouTube study video"
+                        className="h-full"
+                      />
+                    </div>
                     )}
                   </div>
                 )}
@@ -717,7 +712,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                       <section key={section.id} id={section.id} className="mb-14 scroll-mt-24">
                         <h2 className="text-2xl font-bold text-white mb-6 pb-3 border-b border-white/10">{section.title}</h2>
                         <div className="text-slate-300 leading-[1.85] text-[15px]">
-                          <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={mdComponents}>{section.body}</Markdown>
+                          <MarkdownRenderer components={mdComponents}>{section.body || ''}</MarkdownRenderer>
                         </div>
                       </section>
                     ))}
@@ -778,7 +773,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
 
                     <section id="conclusion" className="mb-14 scroll-mt-24">
                       <h2 className="text-2xl font-bold text-white mb-6 pb-3 border-b border-white/10">Conclusion</h2>
-                      <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={mdComponents}>{book.conclusion}</Markdown>
+                      <MarkdownRenderer components={mdComponents}>{book.conclusion}</MarkdownRenderer>
                     </section>
 
                     {related.length > 0 && (
@@ -858,9 +853,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                       className="prose prose-invert prose-lg max-w-none"
                     >
                       <div className="text-slate-300 leading-[1.85] text-[15px] font-light tracking-wide space-y-6">
-                        <Markdown
-                          remarkPlugins={[remarkGfm, remarkMath]}
-                          rehypePlugins={[rehypeKatex]}
+                        <MarkdownRenderer
                           components={{
                             h2: ({ children }) => <h2 id={`section-${Math.random().toString(36).slice(2,8)}`} className="text-2xl font-bold text-white mt-16 mb-6 pb-3 border-b border-white/10 tracking-tight">{children}</h2>,
                             h3: ({ children }) => <h3 className="text-xl font-semibold text-white mt-10 mb-4 tracking-tight">{children}</h3>,
@@ -890,7 +883,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                           }}
                         >
                           {data.extract.split(/\n\n+/).filter(Boolean).join('\n\n')}
-                        </Markdown>
+                        </MarkdownRenderer>
                       </div>
                     </motion.div>
 
@@ -911,9 +904,9 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                           <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400">Governing Mathematical Framework</h3>
                         </div>
                         <div className="bg-black/40 rounded-2xl p-6 sm:p-8 border border-white/[0.03] text-center overflow-x-auto">
-                          <Markdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                          <MarkdownRenderer>
                             {FORMULA_MAP[query] || ''}
-                          </Markdown>
+                          </MarkdownRenderer>
                         </div>
                         <p className="mt-4 text-[10px] text-slate-600 font-mono uppercase tracking-widest text-right">
                           Encrypted Node: {Math.random().toString(16).slice(2, 8).toUpperCase()}

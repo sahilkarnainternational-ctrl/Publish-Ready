@@ -35,6 +35,58 @@ const ChapterReader = lazy(() => import('./components/ChapterReader').then((mod)
 const TopicGrid = lazy(() => import('./components/TopicGrid').then((mod) => ({ default: mod.TopicGrid })));
 const MobileBottomBar = lazy(() => import('./components/MobileBottomBar').then((mod) => ({ default: mod.MobileBottomBar })));
 
+const SplineViewer: React.FC<{ url: string }> = ({ url }) => {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const node = wrapperRef.current;
+    if (!node) return;
+
+    const measure = () => {
+      const width = node.offsetWidth;
+      const height = node.offsetHeight;
+      const valid = width > 0 && height > 0;
+      setReady(valid);
+      return valid;
+    };
+
+    if (measure()) return;
+
+    const handleResize = () => measure();
+    const observer = new ResizeObserver(() => {
+      if (measure()) {
+        observer.disconnect();
+      }
+    });
+    observer.observe(node);
+    window.addEventListener('resize', handleResize);
+
+    const timeout = window.setTimeout(() => {
+      measure();
+    }, 1500);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', handleResize);
+      window.clearTimeout(timeout);
+    };
+  }, [url]);
+
+  return (
+    <div ref={wrapperRef} className="absolute inset-0 w-full h-full">
+      {ready ? (
+        // @ts-ignore
+        <spline-viewer url={url} className="absolute inset-0 w-full h-full block" />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/80 text-slate-300 text-xs uppercase tracking-[0.35em]">
+          Initializing 3D preview…
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function App() {
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -56,6 +108,8 @@ export default function App() {
   const [studySubject, setStudySubject] = useState('Physics');
   const [kidsSubject, setKidsSubject] = useState('Nature');
   const [showMobilePreview, setShowMobilePreview] = useState(true);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const heroSearchInputRef = useRef<HTMLInputElement | null>(null);
 
   // 3D viewer states
   const [cosmosState, setCosmosState] = useState({ iframeSrc: null as string | null, desc: '', loading: false, activeId: null as string | null });
@@ -293,6 +347,8 @@ export default function App() {
         </div>
         <Suspense fallback={<div className="md:hidden" />}>
           <MobileNav
+            isOpen={isMobileNavOpen}
+            onOpenChange={setIsMobileNavOpen}
             onOpenTutor={openAITutor}
             onOpenVoice={openAstraVoice}
             onOpenProfile={openProfile}
@@ -322,6 +378,7 @@ export default function App() {
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center bg-black/60 border border-[#878681] rounded-3xl sm:rounded-full p-2 sm:pl-6 transition-all hover:border-[var(--accent)] focus-within:border-[var(--accent)] gap-2 sm:gap-0">
                   <i className="fas fa-search text-[var(--accent)] hidden sm:block mr-4" />
                   <input 
+                    ref={heroSearchInputRef}
                     type="text" 
                     id="hero-search-input"
                     aria-label="Search chapters, formulas, or videos"
@@ -334,8 +391,7 @@ export default function App() {
                   <button
                     className="rainbow-btn w-full sm:w-auto mt-2 sm:mt-0"
                     onClick={() => {
-                      const input = document.getElementById('hero-search-input') as HTMLInputElement;
-                      const value = input?.value?.trim() || '';
+                      const value = heroSearchInputRef.current?.value?.trim() || '';
                       if (!value) return;
                       openReader(value);
                       voiceService.speak(`Initializing search for ${value}. Accessing global pathology index.`);
@@ -404,8 +460,7 @@ export default function App() {
                 </div>
               )}
               <div className="hidden sm:block absolute inset-0">
-                {/* @ts-ignore */}
-                <spline-viewer url="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"></spline-viewer>
+                <SplineViewer url="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode" />
               </div>
               <div className="absolute bottom-8 left-8 right-8 pointer-events-none group-hover/spline:translate-y-[-4px] transition-transform duration-500">
                 <h1 className="text-white text-3xl sm:text-4xl font-bold tracking-widest uppercase mb-1 font-['Rajdhani']">Lyra AI</h1>
@@ -736,21 +791,11 @@ export default function App() {
           onOpenVoice={openAstraVoice}
           onOpenTutor={openAITutor}
           onOpenProfile={openProfile}
-          onOpenMenu={() => {
-            const btn = document.querySelector('button[aria-label="Open menu"]');
-            // if MobileNav exposes a menu toggle button, prioritize it
-            if (btn) (btn as HTMLButtonElement).click();
-          }}
+          onOpenMenu={() => setIsMobileNavOpen(true)}
           onOpenSearch={() => {
-            const el = document.getElementById('hero-search-input') as HTMLInputElement | null;
-            el?.focus();
+            heroSearchInputRef.current?.focus();
           }}
         />
-      </Suspense>
-
-      {/* PARENT REPORT SECTION */}
-      <Suspense fallback={<div className="rounded-[32px] bg-black/10 h-[20rem] animate-pulse mx-auto max-w-7xl mb-24" />}>
-        <ParentReport />
       </Suspense>
 
       {/* CORE COURSES — integrated in AI Tutor; anchor kept for links */}
