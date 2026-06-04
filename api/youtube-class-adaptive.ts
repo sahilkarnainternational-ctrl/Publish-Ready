@@ -10,7 +10,7 @@
  *   - maxResults: number (optional, defaults to 20)
  */
 
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 type ClassLevel = 'Grade 5' | 'Grade 8' | 'Grade 10' | 'Grade 12' | 'Undergraduate';
 
