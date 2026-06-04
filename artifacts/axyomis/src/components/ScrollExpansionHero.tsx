@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 
 interface ScrollExpansionHeroProps {
@@ -42,19 +42,16 @@ export const ScrollExpansionHero: React.FC<ScrollExpansionHeroProps> = ({
 
         {/* Expanding Media */}
         <motion.div
-          style={{ 
-            scale, 
+          style={{
+            scale,
             borderRadius,
-            opacity 
+            opacity
           }}
           className="relative w-full h-full max-w-[90vw] max-h-[80vh] overflow-hidden shadow-2xl border border-white/10"
         >
           <div className="absolute inset-0 bg-black/40 z-10" />
-          <img 
-            src={mediaUrl} 
-            alt="Scientific Research" 
-            className="w-full h-full object-cover"
-          />
+          {/** show a solid fallback if the external image fails to load on some networks */}
+          <HeroImage mediaUrl={mediaUrl} />
           
           {/* Decorative Elements inside image */}
           <div className="absolute bottom-12 left-12 z-20 space-y-2">
@@ -79,5 +76,27 @@ export const ScrollExpansionHero: React.FC<ScrollExpansionHeroProps> = ({
         </motion.div>
       </div>
     </div>
+  );
+};
+
+const HeroImage: React.FC<{ mediaUrl: string }> = ({ mediaUrl }) => {
+  const [errored, setErrored] = useState(false);
+  if (errored) {
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-[#021021] to-[#051427] flex items-center justify-center">
+        <div className="text-center px-6">
+          <div className="text-lg font-bold text-white mb-2">ASTRA LABS</div>
+          <div className="text-sm text-slate-400">Exploring the scientific universe of tomorrow.</div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <img
+      src={mediaUrl}
+      alt="Scientific Research"
+      className="w-full h-full object-cover"
+      onError={() => setErrored(true)}
+    />
   );
 };

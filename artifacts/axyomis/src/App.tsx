@@ -43,32 +43,56 @@ const SplineViewer: React.FC<{ url: string }> = ({ url }) => {
     if (typeof window === 'undefined') return;
     const node = wrapperRef.current;
     if (!node) return;
-
-    const measure = () => {
+    // Wait for a positive size AND for the element to become visible in the viewport
+    const measureSize = () => {
       const width = node.offsetWidth;
       const height = node.offsetHeight;
-      const valid = width > 0 && height > 0;
-      setReady(valid);
-      return valid;
+      return width > 0 && height > 0;
     };
 
-    if (measure()) return;
+    if (measureSize()) {
+      setReady(true);
+      return;
+    }
 
-    const handleResize = () => measure();
-    const observer = new ResizeObserver(() => {
-      if (measure()) {
-        observer.disconnect();
+    const resizeObserver = new ResizeObserver(() => {
+      if (measureSize()) {
+        setReady(true);
+        resizeObserver.disconnect();
+        if (intersectionObserver) intersectionObserver.disconnect();
       }
     });
-    observer.observe(node);
+    resizeObserver.observe(node);
+
+    let intersectionObserver: IntersectionObserver | null = null;
+    try {
+      intersectionObserver = new IntersectionObserver((entries) => {
+        const entry = entries[0];
+        if (entry && entry.isIntersecting && measureSize()) {
+          setReady(true);
+          resizeObserver.disconnect();
+          intersectionObserver?.disconnect();
+        }
+      }, { threshold: 0.01 });
+      intersectionObserver.observe(node);
+    } catch (e) {
+      // If IntersectionObserver isn't supported, fallback to resize-only logic
+    }
+
+    const handleResize = () => {
+      if (measureSize()) {
+        setReady(true);
+      }
+    };
     window.addEventListener('resize', handleResize);
 
     const timeout = window.setTimeout(() => {
-      measure();
+      if (measureSize()) setReady(true);
     }, 1500);
 
     return () => {
-      observer.disconnect();
+      resizeObserver.disconnect();
+      if (intersectionObserver) intersectionObserver.disconnect();
       window.removeEventListener('resize', handleResize);
       window.clearTimeout(timeout);
     };
@@ -294,17 +318,32 @@ export default function App() {
       <canvas id="starfield"></canvas>
 
       <nav className="relative z-20">
-        <a href="#" className="flex items-center gap-4">
-          <div className="tech-logo">
-            <div className="tech-logo-orbit1"></div>
-            <div className="tech-logo-orbit2"></div>
-            <div className="tech-logo-core"></div>
-          </div>
-          <div>
-            <div className="brand-name font-bold tracking-tight text-white">Axyomis <span className="text-[var(--accent)]">-X</span></div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-mono">Biomedical OS / Release Candidate 1.0.4</p>
-          </div>
-        </a>
+        <div className="hidden sm:flex items-center gap-4">
+          <a href="#" className="flex items-center gap-4">
+            <div className="tech-logo">
+              <div className="tech-logo-orbit1"></div>
+              <div className="tech-logo-orbit2"></div>
+              <div className="tech-logo-core"></div>
+            </div>
+            <div>
+              <div className="brand-name font-bold tracking-tight text-white">Axyomis <span className="text-[var(--accent)]">-X</span></div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-mono">Biomedical OS / Release Candidate 1.0.4</p>
+            </div>
+          </a>
+        </div>
+        <div className="sm:hidden absolute left-4 top-4 z-50">
+          <button
+            onClick={() => setIsMobileNavOpen(true)}
+            className="touch-target p-2.5 rounded-xl bg-white/5 border border-white/10 text-white"
+            aria-label="Open menu"
+          >
+            <div className="grid grid-cols-3 gap-1 w-5 h-5">
+              {[...Array(9)].map((_, i) => (
+                <span key={i} className="h-1.5 w-1.5 rounded-full bg-current" />
+              ))}
+            </div>
+          </button>
+        </div>
         <div className="nav-links hidden md:flex items-center">
           <a href="#evaluation-quiz">QUIZ</a>
           <a href="#cosmos-section">Cosmos</a>
@@ -359,6 +398,7 @@ export default function App() {
             displayName={currentUser?.displayName}
             photoURL={currentUser?.photoURL}
             isPremium={isPremium}
+            renderTrigger={false}
           />
         </Suspense>
       </nav>
@@ -435,7 +475,15 @@ export default function App() {
             <div className="glass-card w-full max-w-[min(420px,100%)] min-h-[20rem] sm:min-h-[25rem] bg-[var(--glass-bg)] rounded-[30px] border border-[var(--glass-border)] backdrop-blur-3xl shadow-2xl overflow-hidden relative group-hover/spline:shadow-[0_0_80px_rgba(34,211,238,0.2)] group-hover/spline:border-[var(--accent)]/50 transition-all duration-500">
               <div className="absolute top-4 right-4 z-20 sm:hidden">
                 <button
-                  onClick={() => setShowMobilePreview(prev => !prev)}
+                  onClick={() => setShowMobilePreview(prev => {
+                    const next = !prev;
+                    try {
+                      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                        setIsMobileNavOpen(false);
+                      }
+                    } catch (e) {}
+                    return next;
+                  })}
                   aria-label={showMobilePreview ? 'Hide mobile preview' : 'Show mobile preview'}
                   className="inline-flex items-center justify-center rounded-full bg-slate-950/80 border border-white/10 p-2 text-slate-200 shadow-lg shadow-black/40 transition hover:bg-slate-900"
                 >

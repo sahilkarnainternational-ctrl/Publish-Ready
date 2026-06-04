@@ -11,20 +11,32 @@ export const Globe: React.FC<GlobeProps> = ({ className }) => {
   useEffect(() => {
     let phi = 0;
     let width = 0;
-    const onResize = () => {
-      if (canvasRef.current && canvasRef.current.parentElement) {
-        width = canvasRef.current.parentElement.offsetWidth;
-      }
+    const node = canvasRef.current;
+    if (!node || !node.parentElement) return;
+
+    const measure = () => {
+      width = node.parentElement!.offsetWidth || 0;
+      return width > 0;
     };
-    window.addEventListener('resize', onResize);
-    onResize();
 
-    if (!canvasRef.current) return;
+    if (!measure()) {
+      const ro = new ResizeObserver(() => {
+        if (measure()) {
+          ro.disconnect();
+          initGlobe();
+        }
+      });
+      ro.observe(node.parentElement);
+    } else {
+      initGlobe();
+    }
 
-    const globe = createGlobe(canvasRef.current, {
-      devicePixelRatio: window.devicePixelRatio || 2,
-      width: width * 2,
-      height: width * 2,
+    function initGlobe() {
+      if (!node) return;
+      const globe = createGlobe(node, {
+        devicePixelRatio: window.devicePixelRatio || 2,
+        width: width * 2,
+        height: width * 2,
       phi: 0,
       theta: 0,
       dark: 1,
@@ -50,11 +62,28 @@ export const Globe: React.FC<GlobeProps> = ({ className }) => {
         state.width = width * 2;
         state.height = width * 2;
       },
-    } as any);
+      } as any);
+
+      const onResize = () => {
+        if (!node || !node.parentElement) return;
+        width = node.parentElement.offsetWidth || width;
+      };
+      window.addEventListener('resize', onResize);
+
+      // cleanup
+      const cleanup = () => {
+        try { globe.destroy(); } catch {}
+        window.removeEventListener('resize', onResize);
+      };
+      // store cleanup on node for when effect is torn down
+      (node as any).__globeCleanup = cleanup;
+    }
 
     return () => {
-      globe.destroy();
-      window.removeEventListener('resize', onResize);
+      if (node) {
+        const c = (node as any).__globeCleanup;
+        if (typeof c === 'function') c();
+      }
     };
   }, []);
 
