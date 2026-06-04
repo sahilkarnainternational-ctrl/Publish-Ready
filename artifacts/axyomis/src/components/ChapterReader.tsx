@@ -497,7 +497,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
           {/* ── Main Content ── */}
           <div className="relative z-20 flex-1 flex flex-col min-w-0 overflow-hidden">
             {/* Top bar */}
-            <div className="h-16 flex items-center justify-between px-4 sm:px-8 border-b border-white/[0.04] bg-[#0a0a0c]/80 backdrop-blur-xl z-10 flex-shrink-0">
+            <div className="h-12 sm:h-16 flex items-center justify-between px-3 sm:px-8 border-b border-white/[0.04] bg-[#0a0a0c]/80 backdrop-blur-xl z-10 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 hover:bg-white/5 rounded-xl transition-all">
                   <Layers className="w-4 h-4 text-slate-400" />
@@ -552,7 +552,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                 }
               }}
             >
-              <div className="max-w-3xl mx-auto px-6 sm:px-12 py-12 sm:py-16">
+              <div className="max-w-3xl sm:max-w-3xl mx-auto w-full px-4 sm:px-12 py-8 sm:py-16">
                 {showYouTubePrompt && (
                   <div className="mb-10 rounded-[36px] border border-white/10 bg-[#08111c]/95 p-6 shadow-[0_30px_80px_rgba(12,35,61,0.55)] backdrop-blur-2xl">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -675,7 +675,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                           <Clock className="w-3 h-3" />{readTime}
                         </span>
                       </div>
-                      <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-[1.1] mb-6">{book.title}</h1>
+                      <h1 className="text-2xl sm:text-5xl font-black text-white tracking-tight leading-[1.05] mb-4 sm:mb-6">{book.title}</h1>
                       {book.images?.[0] && (
                         <div className="mt-8 rounded-2xl overflow-hidden border border-white/5">
                           <img src={book.images[0].url} alt={book.images[0].caption} className="w-full max-h-[380px] object-cover" />
@@ -811,7 +811,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
                           </span>
                         </div>
 
-                        <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-[1.1] mb-6">
+                        <h1 className="text-2xl sm:text-5xl font-black text-white tracking-tight leading-[1.05] mb-4 sm:mb-6">
                           {data.title}
                         </h1>
 

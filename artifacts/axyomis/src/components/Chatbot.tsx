@@ -430,17 +430,35 @@ const generateId = () => {
 const RobotIcon = ({ glow = false, variant = 'button' }: { glow?: boolean; variant?: 'chat' | 'sidebar' | 'welcome' | 'button' }) => {
   const is3D = variant === 'welcome' || variant === 'sidebar';
   const sizeMap: Record<string, number> = { button: 56, chat: 40, welcome: 96, sidebar: 72 };
-  const px = sizeMap[variant] || 48;
+  const [smallScreen, setSmallScreen] = React.useState(typeof window !== 'undefined' ? window.matchMedia('(max-width: 340px)').matches : false);
+
+  React.useEffect(() => {
+    const onResize = () => setSmallScreen(window.matchMedia('(max-width: 340px)').matches);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const pxBase = sizeMap[variant] || 48;
+  const px = smallScreen ? Math.max(32, Math.round(pxBase * 0.6)) : pxBase;
+
+  if (smallScreen) {
+    // Minimal safe fallback for very small screens: a simple, static badge
+    return (
+      <div style={{ width: px, height: px }} className="relative flex items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black">
+        <span className="text-[14px] select-none">A</span>
+      </div>
+    );
+  }
 
   if (is3D) {
     return (
       <div style={{ width: px, height: px }} className="relative flex items-center justify-center p-0">
-        <div className={`w-full h-full rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center relative overflow-hidden transition-all duration-700 shadow-[0_0_30px_rgba(59,130,246,0.1)]`}>
-          <Sparkles className={`w-1/2 h-1/2 text-blue-400 ${glow ? 'animate-pulse scale-110' : ''}`} />
+        <div className={`w-full h-full rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center relative overflow-hidden transition-all duration-500 shadow-[0_0_20px_rgba(59,130,246,0.1)]`}>
+          <Sparkles className={`w-1/2 h-1/2 text-blue-400 ${glow ? 'animate-pulse scale-105' : ''}`} />
           {glow && (
             <motion.div 
-              animate={{ opacity: [0.1, 0.4, 0.1], scale: [1, 1.08, 1] }}
-              transition={{ repeat: Infinity, duration: 2 }}
+              animate={{ opacity: [0.15, 0.35, 0.15], scale: [1, 1.04, 1] }}
+              transition={{ repeat: Infinity, duration: 2.5 }}
               className="absolute inset-0 bg-blue-400/5 blur-xl" 
             />
           )}
@@ -449,20 +467,20 @@ const RobotIcon = ({ glow = false, variant = 'button' }: { glow?: boolean; varia
     );
   }
 
-  // Refined professional static robot icon (Astra-style SVG) — fixed-size container for predictable mobile rendering
+  // Static SVG for predictable rendering on most screens
   return (
     <div style={{ width: px, height: px }} className="relative flex items-center justify-center p-0">
       <AnimatePresence>
         {glow && (
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1.15 }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1.05 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-blue-400/20 blur-xl rounded-full"
+            className="absolute inset-0 bg-blue-400/14 blur-xl rounded-full"
           />
         )}
       </AnimatePresence>
-      <svg viewBox="0 0 40 40" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: '100%' }} className="relative z-10 drop-shadow-[0_0_12px_rgba(59,130,246,0.5)]">
+      <svg viewBox="0 0 40 40" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: '100%' }} className="relative z-10 drop-shadow-[0_0_8px_rgba(59,130,246,0.35)]">
         <defs>
           <linearGradient id="astraGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#ffffff" />
@@ -475,50 +493,26 @@ const RobotIcon = ({ glow = false, variant = 'button' }: { glow?: boolean; varia
         </defs>
         <motion.g
           animate={glow ? { 
-            y: [0, 0.5, 0],
-            rotate: [0, 0.4, -0.4, 0],
+            y: [0, 0.35, 0],
+            rotate: [0, 0.25, -0.25, 0],
           } : {}}
           transition={{ 
-            duration: 8, 
+            duration: 9, 
             repeat: Infinity, 
             ease: "easeInOut" 
           }}
         >
-          {/* Main Head Shell */}
           <path d="M20 5C12 5 7 10 7 18C7 26 12 32 20 32C28 32 33 26 33 18C33 10 28 5 20 5Z" fill="#050505" stroke="url(#astraGrad)" strokeWidth="0.8" />
-          {/* Face Plate */}
-          <path d="M12 15C12 12 15 10 20 10C25 10 28 12 28 15V22C28 26 24 28 20 28C16 28 12 26 12 22V15Z" fill="#000" stroke="white/10" strokeWidth="0.5" />
-          {/* Eye Visors */}
+          <path d="M12 15C12 12 15 10 20 10C25 10 28 12 28 15V22C28 26 24 28 20 28C16 28 12 26 12 22V15Z" fill="#000" stroke="#ffffff20" strokeWidth="0.5" />
           <motion.ellipse 
             cx="17" cy="18" rx="2.5" ry="1.5" 
             initial={{ opacity: 1, scaleY: 1 }}
-            animate={{ 
-              opacity: glow ? [0.4, 1, 0.4] : 1, 
-              scaleY: [1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1] 
-            }} 
-            transition={{ 
-              duration: 7, 
-              repeat: Infinity, 
-              times: [0, 0.3, 0.35, 0.37, 0.39, 0.7, 0.75, 0.77, 0.79, 0.81, 0.83, 1] 
-            }}
+            animate={{ opacity: glow ? [0.45, 1, 0.45] : 1, scaleY: [1, 1, 1] }}
+            transition={{ duration: 8, repeat: Infinity }}
             fill="url(#eyeGlow)" 
           />
-          <motion.ellipse 
-            cx="23" cy="18" rx="2.5" ry="1.5" 
-            initial={{ opacity: 1, scaleY: 1 }}
-            animate={{ 
-              opacity: glow ? [0.4, 1, 0.4] : 1, 
-              scaleY: [1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1] 
-            }} 
-            transition={{ 
-              duration: 7, 
-              repeat: Infinity, 
-              times: [0, 0.3, 0.35, 0.37, 0.39, 0.7, 0.75, 0.77, 0.79, 0.81, 0.83, 1] 
-            }}
-            fill="url(#eyeGlow)" 
-          />
-          {/* Detail Lines */}
-          <path d="M15 8L10 6M25 8L30 6" stroke="white/20" strokeWidth="0.5" strokeLinecap="round" />
+          <motion.ellipse cx="23" cy="18" rx="2.5" ry="1.5" initial={{ opacity: 1 }} animate={{ opacity: glow ? [0.45, 1, 0.45] : 1 }} transition={{ duration: 8, repeat: Infinity }} fill="url(#eyeGlow)" />
+          <path d="M15 8L10 6M25 8L30 6" stroke="#ffffff20" strokeWidth="0.5" strokeLinecap="round" />
           <circle cx="20" cy="5" r="1" fill="#3b82f6" opacity="0.8" />
         </motion.g>
       </svg>
