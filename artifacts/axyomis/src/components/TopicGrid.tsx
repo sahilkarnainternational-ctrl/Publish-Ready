@@ -150,7 +150,7 @@ export const TopicGrid: React.FC<TopicGridProps> = ({ category, context, onOpenR
           <div className="text-[10px] uppercase tracking-[0.35em] text-slate-500 font-black mb-2">Chapter Search</div>
           <div className="text-sm text-slate-300">{category === 'study' ? `${topicList.length} chapters available in ${context || 'Science'}` : `${topicList.length} topics available`}</div>
         </div>
-        <div className="relative w-full sm:w-[340px]">
+        <div className="relative w-full max-w-[340px]">
           <input
             type="text"
             value={searchQuery}

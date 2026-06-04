@@ -59,11 +59,11 @@ export const AstraCore: React.FC = () => {
       <div className="relative flex items-center justify-center overflow-hidden rounded-[32px] border border-white/10 bg-[#02050c] p-6">
         <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/5 to-violet-500/10 blur-3xl" />
         <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="relative flex h-[240px] w-[240px] items-center justify-center rounded-full bg-[#071018]/80 border border-cyan-300/20 shadow-[0_0_60px_rgba(34,211,238,0.25)]">
+          <div className="relative flex h-[min(20rem,240px)] w-[min(20rem,240px)] max-w-[100%] max-h-[100%] items-center justify-center rounded-full bg-[#071018]/80 border border-cyan-300/20 shadow-[0_0_60px_rgba(34,211,238,0.25)]">
             <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.18),transparent_40%)]" />
             <div className="absolute inset-7 rounded-full border border-cyan-400/15 animate-pulse" />
             <div className="absolute inset-16 rounded-full border border-white/10" />
-            <div className="relative h-20 w-20 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 shadow-[0_0_40px_rgba(34,211,238,0.35)] animate-pulseSlow">
+            <div className="relative h-[5rem] w-[5rem] sm:h-20 sm:w-20 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 shadow-[0_0_40px_rgba(34,211,238,0.35)] animate-pulseSlow">
               <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.8),rgba(34,211,238,0.3)_25%,rgba(34,211,238,0.05)_60%)] mix-blend-screen" />
             </div>
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center text-[11px] uppercase tracking-[0.35em] text-slate-400/90">{active.label}</div>

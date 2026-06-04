@@ -301,7 +301,7 @@ export const QuizSection: React.FC = () => {
         )}
       </div>
 
-      <div className="bg-[#0d0d10a6] p-8 md:p-12 border border-white/10 rounded-[32px] shadow-2xl backdrop-blur-xl relative overflow-hidden min-h-[500px] flex flex-col justify-center">
+      <div className="bg-[#0d0d10a6] p-6 md:p-12 border border-white/10 rounded-[32px] shadow-2xl backdrop-blur-xl relative overflow-hidden min-h-[auto] md:min-h-[500px] flex flex-col justify-center">
         <AnimatePresence mode="wait">
           {!gameActive && !showReport && (
             <motion.div 

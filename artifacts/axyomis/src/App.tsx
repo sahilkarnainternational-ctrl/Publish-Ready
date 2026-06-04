@@ -298,18 +298,18 @@ export default function App() {
 
       <main id="app" className="pt-32">
         {/* HERO SECTION */}
-        <section className="flex flex-col lg:flex-row items-center justify-between min-h-[calc(100vh-6rem)] lg:min-h-[80vh] max-w-7xl mx-auto px-4 sm:px-8 gap-8 relative">
-          <div id="glow" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(40vw,28rem)] h-[min(40vw,28rem)] bg-[rgba(229,211,179,0.12)] blur-[120px] rounded-full pointer-events-none z-0"></div>
+        <section className="flex flex-col lg:flex-row items-center justify-between min-h-[55vh] sm:min-h-[65vh] lg:min-h-[80vh] max-w-7xl mx-auto px-4 sm:px-8 gap-8 relative">
+          <div id="glow" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(45vw,24rem)] h-[min(45vw,24rem)] bg-[rgba(229,211,179,0.12)] blur-[120px] rounded-full pointer-events-none z-0"></div>
           
           <div className="flex-1 w-full z-10 mt-10 lg:mt-0">
-            <div className="cyber-greeting-box bg-[#0d0d10a6] border border-white/10 rounded-[48px] p-8 sm:p-16 backdrop-blur-3xl shadow-2xl">
-              <p className="text-xl sm:text-2xl font-light text-[#B0B5B9] leading-relaxed mb-6 sm:mb-10">
+            <div className="cyber-greeting-box bg-[#0d0d10a6] border border-white/10 rounded-[48px] p-6 sm:p-16 backdrop-blur-3xl shadow-2xl max-w-3xl">
+              <p className="text-base sm:text-xl font-light text-[#B0B5B9] leading-relaxed mb-6 sm:mb-10">
                 Inquire. Synthesize. Transcend. <span className="text-white font-black text-3xl sm:text-5xl block my-4 tracking-tighter uppercase">Lyra AI</span>
-                Your high-order neural polymath for advanced scientific inquiry. 
+                Your high-order neural polymath for advanced scientific inquiry.
               </p>
               <div className="relative group">
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center bg-black/60 border border-[#878681] rounded-3xl sm:rounded-full p-2 sm:pl-6 transition-all hover:border-[var(--accent)] focus-within:border-[var(--accent)] gap-2 sm:gap-0">
-                  <i className="fas fa-search text-[var(--accent)] hidden sm:block mr-4"></i>
+                  <i className="fas fa-search text-[var(--accent)] hidden sm:block mr-4" />
                   <input 
                     type="text" 
                     id="hero-search-input" 
@@ -330,22 +330,22 @@ export default function App() {
                     <span>Initialize Search</span>
                   </button>
                 </div>
-                <div className="mt-8 flex flex-wrap gap-4 items-center justify-center sm:justify-start">
+                <div className="mt-8 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center justify-center sm:justify-start">
                   <button 
                     onClick={openAstraVoice}
-                    className="ambient-glow flex items-center gap-3 px-4 sm:px-8 py-4 bg-gradient-to-r from-blue-600/25 to-violet-600/25 border border-blue-500/40 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white hover:from-blue-600/35 hover:to-violet-600/35 transition-all shadow-[0_0_40px_rgba(59,130,246,0.2)] group touch-target"
+                    className="ambient-glow flex items-center justify-center gap-3 px-4 sm:px-8 py-4 bg-gradient-to-r from-blue-600/25 to-violet-600/25 border border-blue-500/40 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white hover:from-blue-600/35 hover:to-violet-600/35 transition-all shadow-[0_0_40px_rgba(59,130,246,0.2)] group touch-target w-full sm:w-auto"
                   >
                     <Volume2 className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform" />
                     <span>Talk with Astra</span>
                   </button>
                   <button
                     onClick={openDoubtSolver}
-                    className="ambient-glow flex items-center gap-3 px-4 sm:px-8 py-4 bg-white/10 border border-white/15 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white hover:bg-white/15 transition-all shadow-[0_0_30px_rgba(255,255,255,0.08)]"
+                    className="ambient-glow flex items-center justify-center gap-3 px-4 sm:px-8 py-4 bg-white/10 border border-white/15 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-white hover:bg-white/15 transition-all shadow-[0_0_30px_rgba(255,255,255,0.08)] w-full sm:w-auto"
                   >
                     <HelpCircle className="w-4 h-4 text-cyan-300" />
                     <span>Doubt Solver</span>
                   </button>
-                  <div className="flex -space-x-3">
+                  <div className="flex flex-wrap justify-center gap-3 items-center">
                     {[1,2,3].map(i => (
                       <div key={i} className="w-8 h-8 rounded-full border-2 border-[#111] bg-slate-800 overflow-hidden">
                         <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i+10}`} alt="Researcher" />
@@ -361,13 +361,22 @@ export default function App() {
             </div>
           </div>
 
-          <div id="card" className="flex-1 relative flex justify-center items-center min-h-[28rem] sm:min-h-[34rem] w-full z-10 transition-all duration-500 ease-out group/spline">
-            <div className="glass-card w-full max-w-[450px] min-h-[28rem] bg-[var(--glass-bg)] rounded-[30px] border border-[var(--glass-border)] backdrop-blur-3xl shadow-2xl overflow-hidden relative group-hover/spline:shadow-[0_0_80px_rgba(34,211,238,0.2)] group-hover/spline:border-[var(--accent)]/50 transition-all duration-500">
-              {/* @ts-ignore */}
-              <spline-viewer url="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"></spline-viewer>
+          <div id="card" className="flex-1 relative flex justify-center items-center min-h-[20rem] sm:min-h-[25rem] w-full z-10 transition-all duration-500 ease-out group/spline">
+            <div className="glass-card w-full max-w-[min(420px,100%)] min-h-[20rem] sm:min-h-[25rem] bg-[var(--glass-bg)] rounded-[30px] border border-[var(--glass-border)] backdrop-blur-3xl shadow-2xl overflow-hidden relative group-hover/spline:shadow-[0_0_80px_rgba(34,211,238,0.2)] group-hover/spline:border-[var(--accent)]/50 transition-all duration-500">
+              <div className="absolute inset-0 flex items-center justify-center p-8 sm:hidden bg-[#020408]/90">
+                <div className="w-full rounded-[30px] border border-white/10 bg-slate-950/80 p-6 text-center">
+                  <div className="text-[10px] uppercase tracking-[0.35em] text-slate-500 mb-3">Mobile Preview</div>
+                  <h2 className="text-3xl font-bold text-white mb-2">Lyra AI</h2>
+                  <p className="text-sm text-slate-400 leading-relaxed">A simplified mobile experience with faster load, cleaner spacing, and essential controls at your fingertips.</p>
+                </div>
+              </div>
+              <div className="hidden sm:block absolute inset-0">
+                {/* @ts-ignore */}
+                <spline-viewer url="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"></spline-viewer>
+              </div>
               <div className="absolute bottom-8 left-8 right-8 pointer-events-none group-hover/spline:translate-y-[-4px] transition-transform duration-500">
-                <h1 className="text-white text-3xl font-bold tracking-widest uppercase mb-1 font-['Rajdhani']">Lyra AI</h1>
-                <p className="text-white/60 font-semibold tracking-wider uppercase flex items-center gap-2">
+                <h1 className="text-white text-3xl sm:text-4xl font-bold tracking-widest uppercase mb-1 font-['Rajdhani']">Lyra AI</h1>
+                <p className="text-white/60 font-semibold tracking-wider uppercase flex items-center gap-2 text-sm sm:text-base">
                   <span className="w-2 h-2 bg-white rounded-full shadow-[0_0_10px_#fff] animate-pulse"></span>
                   Core Active
                 </p>
