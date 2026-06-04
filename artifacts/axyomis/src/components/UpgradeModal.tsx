@@ -42,7 +42,7 @@ export const UpgradeModal: React.FC<Props> = ({ open, onClose, featureName, requ
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4"
+          className="fixed inset-0 z-[1205] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4"
           onClick={onClose}
         >
           <motion.div

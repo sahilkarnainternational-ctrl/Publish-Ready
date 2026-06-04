@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mail, Lock, User, ArrowRight, Chrome, Loader2, AlertCircle } from 'lucide-react';
-import { signInWithGoogle, signInWithEmail, signUpWithEmail } from '../services/firebase';
-import { Globe } from './Globe';
+import { Mail, Lock, User, ArrowRight, Chrome, Loader2, AlertCircle, Globe2 } from 'lucide-react';
+import { signInWithGoogle, signInWithEmail, signUpWithEmail, updateUserProfile } from '../services/firebase';
 
 interface AuthProps {
   onSuccess?: () => void;
@@ -44,7 +43,6 @@ export const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
         await signInWithEmail(email, password);
       } else {
         const user = await signUpWithEmail(email, password, name);
-        const { updateUserProfile } = await import('../services/firebase');
         await updateUserProfile(user.uid, { gender });
       }
       onSuccess?.();
@@ -74,9 +72,9 @@ export const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
 
   return (
     <div className="w-full max-w-sm mx-auto relative group">
-      {/* Background Decorative Globe */}
+      {/* Background Decorative Globe Icon */}
       <div className="absolute -inset-24 opacity-20 pointer-events-none group-hover:opacity-30 transition-opacity">
-        <Globe className="scale-75 blur-[2px]" />
+        <Globe2 className="scale-75 blur-[2px]" />
       </div>
 
       <motion.div 

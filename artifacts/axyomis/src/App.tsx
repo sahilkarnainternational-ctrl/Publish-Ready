@@ -3,34 +3,36 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { Chatbot } from './components/Chatbot';
-import { QuizSection } from './components/QuizSection';
-import { GlobalPopups } from './components/Popups';
+import { lazy, Suspense, useEffect, useState, useCallback, useRef } from 'react';
 import { Profile } from './components/Profile';
-import { PremiumSection } from './components/PremiumSection';
-import { AstraVoice } from './components/AstraVoice';
-import { MobileNav } from './components/MobileNav';
-import { AITutor } from './components/AITutor';
-import { StudyPlan } from './components/StudyPlan';
-import { StudyAnalytics } from './components/StudyAnalytics';
-import { OnboardingFlow } from './components/OnboardingFlow';
-import { ReviewSection } from './components/ReviewSection';
-import { ParentReport } from './components/ParentReport';
-import { FeedbackSection } from './components/FeedbackSection';
-import { MaintenanceNote } from './components/MaintenanceNote';
 import { auth, getUserProfile, handleGoogleRedirectResult } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { User as LucideUser, Volume2, Shield, Radio, Activity, Terminal, Brain, Crown, GraduationCap, HelpCircle, X } from 'lucide-react';
-import { MarqueeBanner } from './components/MarqueeBanner';
-import { Globe } from './components/Globe';
-import { ScrollExpansionHero } from './components/ScrollExpansionHero';
-import { OriginDialog } from './components/OriginDialog';
-import { ChapterReader } from './components/ChapterReader';
-import { TopicGrid } from './components/TopicGrid';
 import { voiceService } from './services/voice';
 import { useUser } from './context/UserContext';
 import { load3D as engineLoad3D } from './engine3d';
+
+const Chatbot = lazy(() => import('./components/Chatbot').then((mod) => ({ default: mod.Chatbot })));
+const QuizSection = lazy(() => import('./components/QuizSection').then((mod) => ({ default: mod.QuizSection })));
+const GlobalPopups = lazy(() => import('./components/Popups').then((mod) => ({ default: mod.GlobalPopups })));
+const PremiumSection = lazy(() => import('./components/PremiumSection').then((mod) => ({ default: mod.PremiumSection })));
+const AstraVoice = lazy(() => import('./components/AstraVoice').then((mod) => ({ default: mod.AstraVoice })));
+const MobileNav = lazy(() => import('./components/MobileNav').then((mod) => ({ default: mod.MobileNav })));
+const AITutor = lazy(() => import('./components/AITutor').then((mod) => ({ default: mod.AITutor })));
+const StudyPlan = lazy(() => import('./components/StudyPlan').then((mod) => ({ default: mod.StudyPlan })));
+const StudyAnalytics = lazy(() => import('./components/StudyAnalytics').then((mod) => ({ default: mod.StudyAnalytics })));
+const OnboardingFlow = lazy(() => import('./components/OnboardingFlow').then((mod) => ({ default: mod.OnboardingFlow })));
+const ReviewSection = lazy(() => import('./components/ReviewSection').then((mod) => ({ default: mod.ReviewSection })));
+const ParentReport = lazy(() => import('./components/ParentReport').then((mod) => ({ default: mod.ParentReport })));
+const FeedbackSection = lazy(() => import('./components/FeedbackSection').then((mod) => ({ default: mod.FeedbackSection })));
+const MaintenanceNote = lazy(() => import('./components/MaintenanceNote').then((mod) => ({ default: mod.MaintenanceNote })));
+const MarqueeBanner = lazy(() => import('./components/MarqueeBanner').then((mod) => ({ default: mod.MarqueeBanner })));
+const Globe = lazy(() => import('./components/Globe').then((mod) => ({ default: mod.Globe })));
+const ScrollExpansionHero = lazy(() => import('./components/ScrollExpansionHero').then((mod) => ({ default: mod.ScrollExpansionHero })));
+const OriginDialog = lazy(() => import('./components/OriginDialog').then((mod) => ({ default: mod.OriginDialog })));
+const ChapterReader = lazy(() => import('./components/ChapterReader').then((mod) => ({ default: mod.ChapterReader })));
+const TopicGrid = lazy(() => import('./components/TopicGrid').then((mod) => ({ default: mod.TopicGrid })));
+
 
 export default function App() {
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -51,6 +53,7 @@ export default function App() {
   // Topic grid states
   const [studySubject, setStudySubject] = useState('Physics');
   const [kidsSubject, setKidsSubject] = useState('Nature');
+  const [showMobilePreview, setShowMobilePreview] = useState(true);
 
   // 3D viewer states
   const [cosmosState, setCosmosState] = useState({ iframeSrc: null as string | null, desc: '', loading: false, activeId: null as string | null });
@@ -181,7 +184,7 @@ export default function App() {
 
   return (
     <div id="axyomis-root">
-      <div className="fixed top-1 left-0 right-0 px-6 py-1 z-[1001] flex justify-between items-center pointer-events-none">
+      <div className="fixed top-0 left-0 right-0 px-4 sm:px-6 py-2 sm:py-1 z-[1001] flex justify-between items-center pointer-events-none safe-top">
         <div className="flex gap-4 items-center">
           <div className="flex items-center gap-1.5">
             <Radio className="w-3 h-3 text-blue-500 animate-pulse" />
@@ -200,11 +203,13 @@ export default function App() {
         </div>
       </div>
 
-      <MarqueeBanner />
+      <Suspense fallback={<div className="h-10" />}> <MarqueeBanner /> </Suspense>
       
       {/* Background Decorative Globe */}
       <div className="fixed top-0 right-0 globe-background -translate-y-1/2 translate-x-1/2 opacity-20 pointer-events-none z-0 overflow-hidden">
-        <Globe />
+        <Suspense fallback={<div className="w-0 h-0" />}>
+          <Globe />
+        </Suspense>
       </div>
 
       {/* CUSTOM CURSOR */}
@@ -230,7 +235,7 @@ export default function App() {
 
       <canvas id="starfield"></canvas>
 
-      <nav>
+      <nav className="relative z-20">
         <a href="#" className="flex items-center gap-4">
           <div className="tech-logo">
             <div className="tech-logo-orbit1"></div>
@@ -282,21 +287,23 @@ export default function App() {
             </span>
           </button>
         </div>
-        <MobileNav
-          onOpenTutor={openAITutor}
-          onOpenVoice={openAstraVoice}
-          onOpenProfile={openProfile}
-          onOpenInfo={() => {
-            setIsMatrixOpen(true);
-            voiceService.speak('Initializing neural matrix synchronization protocol.');
-          }}
-          displayName={currentUser?.displayName}
-          photoURL={currentUser?.photoURL}
-          isPremium={isPremium}
-        />
+        <Suspense fallback={<div className="md:hidden" />}>
+          <MobileNav
+            onOpenTutor={openAITutor}
+            onOpenVoice={openAstraVoice}
+            onOpenProfile={openProfile}
+            onOpenInfo={() => {
+              setIsMatrixOpen(true);
+              voiceService.speak('Initializing neural matrix synchronization protocol.');
+            }}
+            displayName={currentUser?.displayName}
+            photoURL={currentUser?.photoURL}
+            isPremium={isPremium}
+          />
+        </Suspense>
       </nav>
 
-      <main id="app" className="pt-32">
+      <main id="app" className="pt-32 min-h-screen">
         {/* HERO SECTION */}
         <section className="flex flex-col lg:flex-row items-center justify-between min-h-[55vh] sm:min-h-[65vh] lg:min-h-[80vh] max-w-7xl mx-auto px-4 sm:px-8 gap-8 relative">
           <div id="glow" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(45vw,24rem)] h-[min(45vw,24rem)] bg-[rgba(229,211,179,0.12)] blur-[120px] rounded-full pointer-events-none z-0"></div>
@@ -363,13 +370,32 @@ export default function App() {
 
           <div id="card" className="flex-1 relative flex justify-center items-center min-h-[20rem] sm:min-h-[25rem] w-full z-10 transition-all duration-500 ease-out group/spline">
             <div className="glass-card w-full max-w-[min(420px,100%)] min-h-[20rem] sm:min-h-[25rem] bg-[var(--glass-bg)] rounded-[30px] border border-[var(--glass-border)] backdrop-blur-3xl shadow-2xl overflow-hidden relative group-hover/spline:shadow-[0_0_80px_rgba(34,211,238,0.2)] group-hover/spline:border-[var(--accent)]/50 transition-all duration-500">
-              <div className="absolute inset-0 flex items-center justify-center p-8 sm:hidden bg-[#020408]/90">
+              <div className="absolute top-4 right-4 z-20 sm:hidden">
+                <button
+                  onClick={() => setShowMobilePreview(prev => !prev)}
+                  aria-label={showMobilePreview ? 'Hide mobile preview' : 'Show mobile preview'}
+                  className="inline-flex items-center justify-center rounded-full bg-slate-950/80 border border-white/10 p-2 text-slate-200 shadow-lg shadow-black/40 transition hover:bg-slate-900"
+                >
+                  <span className="sr-only">{showMobilePreview ? 'Hide preview' : 'Show preview'}</span>
+                  <div className="grid grid-cols-3 gap-1">
+                    {[1, 2, 3].map((dot) => (
+                      <span key={dot} className="h-1.5 w-1.5 rounded-full bg-current" />
+                    ))}
+                  </div>
+                </button>
+              </div>
+              <div className={`absolute inset-0 flex items-center justify-center p-8 sm:hidden transition-all duration-300 ${showMobilePreview ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
                 <div className="w-full rounded-[30px] border border-white/10 bg-slate-950/80 p-6 text-center">
                   <div className="text-[10px] uppercase tracking-[0.35em] text-slate-500 mb-3">Mobile Preview</div>
                   <h2 className="text-3xl font-bold text-white mb-2">Lyra AI</h2>
                   <p className="text-sm text-slate-400 leading-relaxed">A simplified mobile experience with faster load, cleaner spacing, and essential controls at your fingertips.</p>
                 </div>
               </div>
+              {!showMobilePreview && (
+                <div className="absolute inset-x-6 top-32 sm:hidden rounded-[30px] border border-white/10 bg-slate-950/90 p-4 text-center text-xs text-slate-400">
+                  Mobile preview is hidden. Tap the three-dot button to show it again.
+                </div>
+              )}
               <div className="hidden sm:block absolute inset-0">
                 {/* @ts-ignore */}
                 <spline-viewer url="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"></spline-viewer>
@@ -385,7 +411,9 @@ export default function App() {
           </div>
         </section>
 
-        <ScrollExpansionHero />
+        <Suspense fallback={<div className="pt-20" />}>
+          <ScrollExpansionHero />
+        </Suspense>
         
         <div className="pt-20">
           {/* Main Content Sections... */}
@@ -408,7 +436,9 @@ export default function App() {
             ))}
           </div>
 
-          <TopicGrid category="kids" context={kidsSubject} onOpenReader={openReader} />
+          <Suspense fallback={<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 h-[28rem] rounded-[32px] bg-black/20 animate-pulse" />}>
+            <TopicGrid category="kids" context={kidsSubject} onOpenReader={openReader} />
+          </Suspense>
         </section>
 
         {/* STUDY HUB */}
@@ -434,11 +464,15 @@ export default function App() {
             <div className="text-2xl font-bold text-white uppercase tracking-wider">{studySubject}</div>
           </div>
 
-          <TopicGrid category="study" context={studySubject} onOpenReader={openReader} />
+          <Suspense fallback={<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 h-[28rem] rounded-[32px] bg-black/20 animate-pulse" />}>
+            <TopicGrid category="study" context={studySubject} onOpenReader={openReader} />
+          </Suspense>
         </section>
 
         {/* COMPREHENSIVE QUIZ EVALUATION */}
-        <QuizSection />
+        <Suspense fallback={<div className="rounded-[32px] bg-black/10 h-[28rem] animate-pulse" />}>
+          <QuizSection />
+        </Suspense>
 
         {/* 3D INTERACTIVE MODULES */}
         <section className="max-w-7xl mx-auto px-4 sm:px-8 space-y-24 mb-32">
@@ -536,14 +570,20 @@ export default function App() {
         <section id="diseases-section" className="max-w-7xl mx-auto px-4 sm:px-8 mb-32">
           <h2 className="text-center text-5xl font-bold uppercase tracking-widest mb-4">Pathology <span className="text-red-500">& Disease Index</span></h2>
           <p className="text-center text-[#8b8b93] max-w-2xl mx-auto mb-12">Comprehensive repository of infectious, genetic, and chronic diseases.</p>
-          <TopicGrid category="diseases" context="diseases" onOpenReader={openReader} />
+          <Suspense fallback={<div className="rounded-[32px] bg-black/10 h-[28rem] animate-pulse" />}>
+            <TopicGrid category="diseases" context="diseases" onOpenReader={openReader} />
+          </Suspense>
         </section>
 
         {/* STUDY PLAN SECTION */}
-        <StudyPlan />
+        <Suspense fallback={<div className="rounded-[32px] bg-black/10 h-[24rem] animate-pulse" />}>
+          <StudyPlan />
+        </Suspense>
 
         {/* STUDY ANALYTICS DASHBOARD */}
-        <StudyAnalytics />
+        <Suspense fallback={<div className="rounded-[32px] bg-black/10 h-[24rem] animate-pulse" />}>
+          <StudyAnalytics />
+        </Suspense>
 
         {/* AI TUTOR PROMO BANNER */}
         <section className="max-w-7xl mx-auto px-4 sm:px-8 mb-24">
@@ -681,22 +721,31 @@ export default function App() {
 
       </main>
 
-      <FeedbackSection />
+      <Suspense fallback={<div className="rounded-[32px] bg-black/10 h-[20rem] animate-pulse mx-auto max-w-7xl mb-24" />}>
+        <FeedbackSection />
+      </Suspense>
 
       {/* PARENT REPORT SECTION */}
-      <ParentReport />
+      <Suspense fallback={<div className="rounded-[32px] bg-black/10 h-[20rem] animate-pulse mx-auto max-w-7xl mb-24" />}>
+        <ParentReport />
+      </Suspense>
 
       {/* CORE COURSES — integrated in AI Tutor; anchor kept for links */}
       <div id="courses" className="hidden" aria-hidden />
 
       {/* PREMIUM SECTION */}
-      <PremiumSection />
+      <Suspense fallback={<div className="rounded-[32px] bg-black/10 h-[22rem] animate-pulse mx-auto max-w-7xl mb-24" />}>
+        <PremiumSection />
+      </Suspense>
 
       {/* REVIEWS SECTION */}
-      <ReviewSection />
+      <Suspense fallback={<div className="rounded-[32px] bg-black/10 h-[22rem] animate-pulse mx-auto max-w-7xl mb-24" />}>
+        <ReviewSection />
+      </Suspense>
 
       {/* EBOOK CHAPTER READER */}
-      <ChapterReader
+      <Suspense fallback={<div className="rounded-[32px] bg-black/10 h-[22rem] animate-pulse mx-auto max-w-7xl mb-24" />}>
+        <ChapterReader
         isOpen={readerOpen}
         onClose={closeReader}
         query={readerTopic}
@@ -704,6 +753,7 @@ export default function App() {
         onNavigate={openReader}
       />
 
+      </Suspense>
       <footer className="pt-32 pb-20 border-t border-white/5 bg-[#08080a] relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent"></div>
         
@@ -785,32 +835,45 @@ export default function App() {
           </div>
         </div>
       </footer>
-      <MaintenanceNote />
-      <GlobalPopups isChatOpen={isChatOpen} isTutorOpen={isAITutorOpen} />
-      <AstraVoice isOpen={isAstraVoiceOpen} onClose={() => setIsAstraVoiceOpen(false)} />
-      <Chatbot 
-        onStateChange={handleChatStateChange} 
-        externalOpen={isChatOpen}
-        hideToggle={isAITutorOpen || isAstraVoiceOpen}
-        onOpenAITutor={openAITutor}
-        onOpenVoice={openAstraVoice}
-      />
+      <Suspense fallback={<div className="hidden" />}>
+        <MaintenanceNote />
+      </Suspense>
+      <Suspense fallback={<div className="hidden" />}>
+        <GlobalPopups isChatOpen={isChatOpen} isTutorOpen={isAITutorOpen} />
+      </Suspense>
+      <Suspense fallback={<div className="hidden" />}>
+        <AstraVoice isOpen={isAstraVoiceOpen} onClose={() => setIsAstraVoiceOpen(false)} />
+      </Suspense>
+      <Suspense fallback={<div className="hidden" />}>
+        <Chatbot 
+          onStateChange={handleChatStateChange} 
+          externalOpen={isChatOpen}
+          hideToggle={isAITutorOpen || isAstraVoiceOpen}
+          onOpenAITutor={openAITutor}
+          onOpenVoice={openAstraVoice}
+        />
+      </Suspense>
       <Profile isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
-      <AITutor
-        isOpen={isAITutorOpen}
-        onClose={() => {
-          setIsAITutorOpen(false);
-          setInitialTutorMode(undefined);
-        }}
-        onOpenChat={openChat}
-        onOpenReader={openReader}
-        initialMode={initialTutorMode}
-      />
-      <OnboardingFlow isOpen={isOnboardingOpen} onClose={() => setIsOnboardingOpen(false)} />
-      <OriginDialog 
-        isOpen={isMatrixOpen} 
-        onClose={() => setIsMatrixOpen(false)} 
-        title="Research & Privacy Protocols"
+      <Suspense fallback={<div className="hidden" />}>
+        <AITutor
+          isOpen={isAITutorOpen}
+          onClose={() => {
+            setIsAITutorOpen(false);
+            setInitialTutorMode(undefined);
+          }}
+          onOpenChat={openChat}
+          onOpenReader={openReader}
+          initialMode={initialTutorMode}
+        />
+      </Suspense>
+      <Suspense fallback={<div className="hidden" />}>
+        <OnboardingFlow isOpen={isOnboardingOpen} onClose={() => setIsOnboardingOpen(false)} />
+      </Suspense>
+      <Suspense fallback={<div className="hidden" />}>
+        <OriginDialog 
+          isOpen={isMatrixOpen} 
+          onClose={() => setIsMatrixOpen(false)} 
+          title="Research & Privacy Protocols"
         footerActions={
           <>
             <button 
@@ -844,6 +907,7 @@ export default function App() {
           <p>More scientific jargon and protocol descriptions could go here to further populate the scrollable region. The goal is to provide a comprehensive legal or informative overlay for the explorer.</p>
         </div>
       </OriginDialog>
+      </Suspense>
     </div>
   );
 }

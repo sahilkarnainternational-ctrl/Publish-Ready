@@ -23,7 +23,7 @@
 }
 
 @layer base {
-  * { margin:0; padding:0; box-sizing:border-box; }
+  * { margin:0; padding:0; box-sizing:border-box; word-break: break-word; }
   
   /* Remove 300ms tap delay on all interactive elements */
   a, button, [role="button"], input, textarea, select, label {
@@ -44,8 +44,11 @@
 
   html {
     scroll-behavior: smooth;
-    font-size: clamp(0.875rem, 1rem + 0.2vw, 1.05rem);
+    font-size: clamp(0.95rem, 1rem + 0.2vw, 1.05rem);
     line-height: 1.5;
+    min-height: 100%;
+    width: 100%;
+    scroll-padding-top: max(3rem, env(safe-area-inset-top));
   }
   body { 
     min-height: 100vh;
@@ -79,6 +82,46 @@
     max-width: 100%;
     height: auto;
     display: block;
+  }
+
+  #axyomis-root,
+  #app,
+  #root {
+    min-height: 100svh;
+    min-width: 100%;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .touch-target {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .glass-card {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  @media (max-width: 768px) {
+    body {
+      font-size: 0.95rem;
+      overscroll-behavior-y: contain;
+    }
+    .glass-card {
+      border-radius: 28px;
+      padding: 1.5rem;
+    }
+    .rainbow-btn,
+    .touch-target,
+    .astro-terminate-btn {
+      min-height: 52px;
+      width: 100% !important;
+    }
+    .max-w-7xl {
+      max-width: 100% !important;
+    }
   }
 
   iframe {

@@ -49,6 +49,27 @@ export default defineConfig(async ({ mode }) => {
     build: {
       outDir: path.resolve(import.meta.dirname, "dist/public"),
       emptyOutDir: true,
+      chunkSizeWarningLimit: 2500,
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (!id.includes('node_modules')) return undefined;
+            const p = id.toLowerCase();
+            if (p.includes('/react-dom/') || p.includes('/react/')) return 'react';
+            if (p.includes('firebase')) return 'firebase';
+            if (p.includes('mermaid')) return 'mermaid';
+            if (p.includes('cytoscape')) return 'cytoscape';
+            if (p.includes('recharts')) return 'charts';
+            if (p.includes('motion')) return 'motion';
+            if (p.includes('react-markdown') || p.includes('remark-') || p.includes('rehype-') || p.includes('katex')) return 'markdown';
+            if (p.includes('@react-three') || p.includes('three')) return 'three';
+            if (p.includes('react-day-picker')) return 'calendar';
+            if (p.includes('lucide-react') || p.includes('react-icons')) return 'icons';
+            if (p.includes('axios')) return 'axios';
+            return undefined;
+          },
+        },
+      },
     },
     server: {
       port,

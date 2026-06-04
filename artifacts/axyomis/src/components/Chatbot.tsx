@@ -662,6 +662,15 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onStateChange, externalOpen, h
       toggleConversationMode(false);
     }
   }, [externalOpen]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   const bootCycleRef = useRef(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() =>
     typeof window === 'undefined' ? true : !window.matchMedia('(max-width: 767px)').matches
@@ -1314,7 +1323,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
             initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
             animate={{ opacity: 1, backdropFilter: "blur(40px)" }}
             exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
-            className="fixed inset-0 z-[420] bg-black/60 flex flex-col md:flex-row overflow-hidden font-sans selection:bg-blue-500/20 h-[100dvh]"
+            className="fixed inset-0 z-[1205] bg-black/60 flex flex-col md:flex-row overflow-hidden font-sans selection:bg-blue-500/20 min-h-screen min-h-[100svh]"
           >
             {!isMinimized && (
             <button
@@ -1349,7 +1358,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className={`${isSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col h-full bg-[#050505]/95 border-r border-white/5 relative overflow-hidden backdrop-blur-xl fixed md:relative inset-y-0 left-0 z-[20] md:z-auto`}
             >
-              <div className="w-[340px] h-full flex flex-col p-10 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent">
+              <div className="w-full max-w-[340px] min-h-0 h-full flex flex-col p-10 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent">
                 <div className="flex items-center gap-5 mb-14">
                   <div className="w-14 h-14 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex items-center justify-center p-3 relative group shadow-2xl overflow-hidden">
                     <div className="absolute inset-0 bg-blue-500/10 blur-2xl opacity-100" />
@@ -2003,7 +2012,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
           onStateChangeRef.current?.(next);
         }}
         style={{ display: hideToggle ? 'none' : undefined, bottom: 'max(40px, calc(16px + env(safe-area-inset-bottom)))', right: 'max(40px, env(safe-area-inset-right))' }}
-        className="fixed z-[350] w-16 h-16 sm:w-20 sm:h-20 rounded-[28px] sm:rounded-[36px] bg-black border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,1)] flex items-center justify-center transition-all group overflow-hidden"
+        className="fixed z-[1210] w-16 h-16 sm:w-20 sm:h-20 rounded-[28px] sm:rounded-[36px] bg-black border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,1)] flex items-center justify-center transition-all group overflow-hidden"
         id="toggle-astra"
       >
         <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/20 transition-all opacity-0 group-hover:opacity-100 duration-500" />

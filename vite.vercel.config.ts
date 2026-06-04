@@ -28,6 +28,7 @@ export default defineConfig(({ mode }) => {
       outDir: path.resolve(__dirname, "artifacts/axyomis/dist/public"),
       emptyOutDir: true,
       sourcemap: false,
+      chunkSizeWarningLimit: 1200,
       rollupOptions: {
         output: {
           // Use a function to split large node_modules packages into focused chunks.
@@ -38,9 +39,12 @@ export default defineConfig(({ mode }) => {
             if (p.includes('mermaid')) return 'mermaid';
             if (p.includes('cytoscape')) return 'cytoscape';
             if (p.includes('recharts')) return 'charts';
+            if (p.includes('motion')) return 'motion';
+            if (p.includes('react-markdown') || p.includes('remark-') || p.includes('rehype-') || p.includes('katex')) return 'markdown';
+            if (p.includes('@react-three') || p.includes('three')) return 'three';
+            if (p.includes('react-day-picker')) return 'calendar';
             if (p.includes('lucide-react') || p.includes('react-icons')) return 'icons';
-            // Avoid circular dependency with diagrams-related chunks by keeping those modules in vendor.
-            // if (p.match(/dagre|d3|graphlib|graphviz|layout|viz|flowchart|diagram|c4/)) return 'diagrams';
+            if (p.includes('axios')) return 'axios';
             return 'vendor';
           },
         },

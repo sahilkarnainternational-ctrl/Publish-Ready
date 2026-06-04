@@ -39,11 +39,12 @@ export const MobileNav: React.FC<MobileNavProps> = ({
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => setOpen((state) => !state)}
+        aria-expanded={open}
         className="md:hidden touch-target p-2.5 rounded-xl bg-white/5 border border-white/10 text-white"
-        aria-label="Open menu"
+        aria-label={open ? 'Close menu' : 'Open menu'}
       >
-        <Menu className="w-5 h-5" />
+        {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
 
       <AnimatePresence>
@@ -63,8 +64,8 @@ export const MobileNav: React.FC<MobileNavProps> = ({
               transition={{ type: 'spring', damping: 28, stiffness: 280 }}
               role="dialog"
               aria-modal="true"
-              className="fixed inset-y-0 right-0 z-[1101] w-full max-w-[min(420px,88vw)] bg-[#08090e] border-l border-white/10 flex flex-col md:hidden"
-              style={{ paddingTop: 'max(16px, env(safe-area-inset-top))', paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
+              className="fixed inset-y-0 right-0 z-[1101] w-full max-w-[min(420px,92vw)] min-h-screen bg-[#08090e] border-l border-white/10 flex flex-col md:hidden"
+              style={{ paddingTop: 'max(22px, env(safe-area-inset-top))', paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Menu</span>

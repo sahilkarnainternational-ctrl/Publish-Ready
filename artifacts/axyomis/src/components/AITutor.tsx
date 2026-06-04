@@ -236,7 +236,7 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat, o
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[460] flex pointer-events-auto">
+      <div className="fixed inset-0 z-[1205] flex pointer-events-auto">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
