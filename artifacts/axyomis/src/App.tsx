@@ -318,17 +318,32 @@ export default function App() {
       <canvas id="starfield"></canvas>
 
       <nav className="relative z-20">
-        <a href="#" className="flex items-center gap-4">
-          <div className="tech-logo">
-            <div className="tech-logo-orbit1"></div>
-            <div className="tech-logo-orbit2"></div>
-            <div className="tech-logo-core"></div>
-          </div>
-          <div>
-            <div className="brand-name font-bold tracking-tight text-white">Axyomis <span className="text-[var(--accent)]">-X</span></div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-mono">Biomedical OS / Release Candidate 1.0.4</p>
-          </div>
-        </a>
+        <div className="hidden sm:flex items-center gap-4">
+          <a href="#" className="flex items-center gap-4">
+            <div className="tech-logo">
+              <div className="tech-logo-orbit1"></div>
+              <div className="tech-logo-orbit2"></div>
+              <div className="tech-logo-core"></div>
+            </div>
+            <div>
+              <div className="brand-name font-bold tracking-tight text-white">Axyomis <span className="text-[var(--accent)]">-X</span></div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-mono">Biomedical OS / Release Candidate 1.0.4</p>
+            </div>
+          </a>
+        </div>
+        <div className="sm:hidden absolute left-4 top-4 z-50">
+          <button
+            onClick={() => setIsMobileNavOpen(true)}
+            className="touch-target p-2.5 rounded-xl bg-white/5 border border-white/10 text-white"
+            aria-label="Open menu"
+          >
+            <div className="grid grid-cols-3 gap-1 w-5 h-5">
+              {[...Array(9)].map((_, i) => (
+                <span key={i} className="h-1.5 w-1.5 rounded-full bg-current" />
+              ))}
+            </div>
+          </button>
+        </div>
         <div className="nav-links hidden md:flex items-center">
           <a href="#evaluation-quiz">QUIZ</a>
           <a href="#cosmos-section">Cosmos</a>
@@ -383,6 +398,7 @@ export default function App() {
             displayName={currentUser?.displayName}
             photoURL={currentUser?.photoURL}
             isPremium={isPremium}
+            renderTrigger={false}
           />
         </Suspense>
       </nav>

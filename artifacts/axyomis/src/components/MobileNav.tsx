@@ -24,6 +24,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
   displayName,
   photoURL,
   isPremium,
+  renderTrigger = true,
 }) => {
   const [fromBottom, setFromBottom] = useState(false);
 
@@ -50,14 +51,28 @@ export const MobileNav: React.FC<MobileNavProps> = ({
 
   return (
     <>
-      <button
-        onClick={() => onOpenChange(!isOpen)}
-        aria-expanded={isOpen}
-        className="md:hidden touch-target p-2.5 rounded-xl bg-white/5 border border-white/10 text-white"
-        aria-label={isOpen ? 'Close menu' : 'Open menu'}
-      >
-        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
+      {renderTrigger && (
+        <button
+          onClick={() => onOpenChange(!isOpen)}
+          aria-expanded={isOpen}
+          className="md:hidden touch-target p-2.5 rounded-xl bg-white/5 border border-white/10 text-white"
+          aria-label={isOpen ? 'Close menu' : 'Open menu'}
+        >
+          {isOpen ? <X className="w-5 h-5" /> : (
+            <div className="grid grid-cols-3 gap-1 w-5 h-5">
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+            </div>
+          )}
+        </button>
+      )}
 
       <AnimatePresence>
         {isOpen && (
