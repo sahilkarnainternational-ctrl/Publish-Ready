@@ -429,15 +429,17 @@ const generateId = () => {
 
 const RobotIcon = ({ glow = false, variant = 'button' }: { glow?: boolean; variant?: 'chat' | 'sidebar' | 'welcome' | 'button' }) => {
   const is3D = variant === 'welcome' || variant === 'sidebar';
+  const sizeMap: Record<string, number> = { button: 56, chat: 40, welcome: 96, sidebar: 72 };
+  const px = sizeMap[variant] || 48;
 
   if (is3D) {
     return (
-      <div className="relative w-full h-full flex items-center justify-center p-2">
-        <div className={`w-full h-full rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center relative overflow-hidden group-hover:bg-blue-500/20 transition-all duration-700 shadow-[0_0_30px_rgba(59,130,246,0.1)]`}>
+      <div style={{ width: px, height: px }} className="relative flex items-center justify-center p-0">
+        <div className={`w-full h-full rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center relative overflow-hidden transition-all duration-700 shadow-[0_0_30px_rgba(59,130,246,0.1)]`}>
           <Sparkles className={`w-1/2 h-1/2 text-blue-400 ${glow ? 'animate-pulse scale-110' : ''}`} />
           {glow && (
             <motion.div 
-              animate={{ opacity: [0.1, 0.4, 0.1], scale: [1, 1.2, 1] }}
+              animate={{ opacity: [0.1, 0.4, 0.1], scale: [1, 1.08, 1] }}
               transition={{ repeat: Infinity, duration: 2 }}
               className="absolute inset-0 bg-blue-400/5 blur-xl" 
             />
@@ -447,20 +449,20 @@ const RobotIcon = ({ glow = false, variant = 'button' }: { glow?: boolean; varia
     );
   }
 
-  // Refined professional static robot icon (Astra-style SVG)
+  // Refined professional static robot icon (Astra-style SVG) — fixed-size container for predictable mobile rendering
   return (
-    <div className="relative w-full h-full flex items-center justify-center p-1">
+    <div style={{ width: px, height: px }} className="relative flex items-center justify-center p-0">
       <AnimatePresence>
         {glow && (
           <motion.div 
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1.4 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1.15 }}
             exit={{ opacity: 0 }}
             className="absolute inset-0 bg-blue-400/20 blur-xl rounded-full"
           />
         )}
       </AnimatePresence>
-      <svg viewBox="0 0 40 40" className="w-full h-full relative z-10 drop-shadow-[0_0_12px_rgba(59,130,246,0.5)]">
+      <svg viewBox="0 0 40 40" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: '100%' }} className="relative z-10 drop-shadow-[0_0_12px_rgba(59,130,246,0.5)]">
         <defs>
           <linearGradient id="astraGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#ffffff" />
