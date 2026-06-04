@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { X, Crown, Check, Sparkles } from 'lucide-react';
 import { useCurrency } from '../hooks/useCurrency';
@@ -34,6 +34,18 @@ export const UpgradeModal: React.FC<Props> = ({ open, onClose, featureName, requ
     upgradeToPremium(requiredTier);
     onClose();
   };
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [open, onClose]);
 
   return (
     <AnimatePresence>

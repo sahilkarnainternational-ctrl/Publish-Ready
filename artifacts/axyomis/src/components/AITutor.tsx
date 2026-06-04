@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
+import MobileDialogWrapper from './MobileDialogWrapper';
 import {
   X, BookOpen, Video, Brain, ClipboardList, ChevronRight, ChevronLeft,
   Loader2, Sparkles, Play, CheckCircle2, XCircle, RefreshCw, Crown, Lock,
@@ -234,27 +235,9 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat, o
 
   if (!isOpen) return null;
 
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[1205] flex pointer-events-auto">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/90 backdrop-blur-2xl"
-          onClick={onClose}
-        />
-
-        {/* Main panel */}
-        <motion.div
-          initial={{ x: '100%', opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: '100%', opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 240, damping: 28 }}
-          className="relative ml-auto w-full max-w-5xl h-full flex flex-col overflow-hidden"
-          style={{ background: '#050610' }}
-        >
+    return (
+      <MobileDialogWrapper isOpen={isOpen} onClose={onClose} maxWidth="max-w-5xl">
+        <div className="relative ml-auto w-full max-w-5xl h-full flex flex-col overflow-hidden" style={{ background: '#050610' }}>
           {/* Sci-fi background layers */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="absolute inset-0" style={{
@@ -629,9 +612,8 @@ export const AITutor: React.FC<AITutorProps> = ({ isOpen, onClose, onOpenChat, o
               )}
             </div>
           </div>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+        </div>
+    </MobileDialogWrapper>
   );
 };
 

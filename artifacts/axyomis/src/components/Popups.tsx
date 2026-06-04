@@ -71,7 +71,7 @@ export const GlobalPopups: React.FC<{ isChatOpen?: boolean; isTutorOpen?: boolea
   const colors = msg ? (COLOR_MAP[msg.color] || COLOR_MAP.cyan) : null;
 
   return (
-    <div className="fixed bottom-36 right-4 md:right-10 flex flex-col gap-4 z-[200]">
+    <div className="fixed bottom-[calc(env(safe-area-inset-bottom,1rem)+1rem)] left-1/2 transform -translate-x-1/2 md:bottom-36 md:right-4 md:left-auto flex flex-col gap-4 z-[200] max-w-[92vw] md:max-w-[360px]">
       <AnimatePresence>
         {msg && !dismissed && colors && (
           <motion.div

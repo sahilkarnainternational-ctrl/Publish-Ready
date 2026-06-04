@@ -12,6 +12,7 @@ import rehypeKatex from 'rehype-katex';
 import { useUser } from '../context/UserContext';
 import { DATA_SETS } from '../constants';
 import { loadChapter, type BookChapter } from '../services/chapterCache';
+import { useEffect } from 'react';
 
 
 // Mermaid is large; load dynamically when diagrams are rendered to keep initial
@@ -377,6 +378,15 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
 
   const chapterProgress = Math.round((visitedSections.size / totalSections) * 100);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
+  }, [isOpen, onClose]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -387,6 +397,13 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
           transition={{ duration: 0.35 }}
           className="fixed inset-0 z-[480] bg-[#070708] overflow-hidden flex"
         >
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-10 bg-black/40"
+            onClick={onClose}
+          />
           {/* ── Sidebar TOC ── */}
           <AnimatePresence>
             {(sidebarOpen || (typeof window !== 'undefined' && window.innerWidth >= 1024)) && (
@@ -481,7 +498,7 @@ export const ChapterReader: React.FC<ChapterReaderProps> = ({ isOpen, onClose, q
           </AnimatePresence>
 
           {/* ── Main Content ── */}
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <div className="relative z-20 flex-1 flex flex-col min-w-0 overflow-hidden">
             {/* Top bar */}
             <div className="h-16 flex items-center justify-between px-4 sm:px-8 border-b border-white/[0.04] bg-[#0a0a0c]/80 backdrop-blur-xl z-10 flex-shrink-0">
               <div className="flex items-center gap-3">

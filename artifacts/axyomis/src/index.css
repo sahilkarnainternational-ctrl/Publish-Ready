@@ -117,10 +117,10 @@
     .touch-target,
     .astro-terminate-btn {
       min-height: 52px;
-      width: 100% !important;
+      width: 100%;
     }
-    .max-w-7xl {
-      max-width: 100% !important;
+    #app {
+      padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
     }
   }
 
@@ -730,14 +730,16 @@ nav {
   .reader-text h2 { font-size: 2rem; }
   .cyber-greeting-box { padding: 1.75rem; }
   .cyber-greeting-box p { font-size: 1rem; line-height: 1.6; }
-  .rainbow-btn { width: 100%; padding: 15px 22px; }
+  .rainbow-btn { width: 100%; padding: 15px 22px; display: inline-flex; justify-content: center; }
+  .touch-target { min-width: 0; width: 100%; }
   .subject-toggle { min-width: 0; white-space: normal; }
-  .glass-card { max-width: 100%; }
+  .glass-card { max-width: 100%; min-height: auto; }
   .aspect-video { min-height: 240px; }
   .tech-logo.w-16.h-16 { width: 3.5rem; height: 3.5rem; }
   .globe-background { width: min(360px, 90vw); height: min(360px, 90vw); right: -10vw; top: -10vw; }
   #glow { width: 55vw; height: 55vw; }
   .rich-card:hover, .sub-topic-card:hover .st-card-inner { transform: none; }
+  .hover\:scale-105, .group-hover\/spline:hover .shadow-2xl { transform: none; box-shadow: none; }
 }
 
 @media (max-width: 480px) {
@@ -746,36 +748,34 @@ nav {
   .nav-links { gap: 0.65rem; }
   .cyber-greeting-box { padding: 1.25rem; }
   .rainbow-btn { padding: 14px 18px; }
-  .touch-target, button, .rainbow-btn, .astro-terminate-btn { width: 100% !important; min-width: auto !important; }
-  .rainbow-btn { display: inline-flex; justify-content: center; }
+  .touch-target { width: 100%; min-width: auto; }
   .subject-toggle { min-width: 0; white-space: normal; }
   .prose { max-width: 100%; }
-  .glass-card { min-height: auto !important; }
+  .glass-card { min-height: auto; }
   .tech-logo { width: 2.8rem; height: 2.8rem; }
   .globe-background { width: min(320px, 90vw); height: min(320px, 90vw); right: -8vw; top: -8vw; }
 }
 
-@media (max-width: 768px) {
-  nav { padding: 0.9rem 1rem; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; }
-  .brand-name { font-size: 1.1rem; }
-  nav > a { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 0.8rem; }
-  nav > a p { font-size: 0.65rem; line-height: 1.2; max-width: 180px; }
-  .nav-links { width: 100%; justify-content: flex-start; gap: 0.75rem; margin-top: 0.75rem; }
-  .nav-links a { font-size: 0.75rem; }
-  .rich-grid { grid-template-columns: 1fr; }
-  .reader-content { padding: 2rem; padding-top: max(2rem, env(safe-area-inset-top)); }
-  .reader-text h2 { font-size: 2rem; }
-  .cyber-greeting-box { padding: 1.75rem; }
-  .cyber-greeting-box p { font-size: 1rem; line-height: 1.6; }
-  .rainbow-btn { width: 100%; padding: 15px 22px; }
-  .subject-toggle { min-width: 0; white-space: normal; }
-  .glass-card { max-width: 100%; min-height: auto !important; }
-  .aspect-video { min-height: 240px; }
-  .tech-logo.w-16.h-16 { width: 3.5rem; height: 3.5rem; }
-  .globe-background { width: min(360px, 90vw); height: min(360px, 90vw); right: -10vw; top: -10vw; }
-  #glow { width: 55vw; height: 55vw; }
-  .rich-card:hover, .sub-topic-card:hover .st-card-inner { transform: none; }
-  .hover\:scale-105, .group-hover\/spline:hover .shadow-2xl { transform: none !important; box-shadow: none !important; }
+/* Mobile bottom sheet styling for nav and dialogs */
+.mobile-bottom-sheet {
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  box-shadow: 0 -14px 40px rgba(0,0,0,0.6);
+  overflow: hidden;
+}
+
+/* Mobile bottom bar */
+.mobile-bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1200;
+}
+.mobile-bottom-bar .touch-target {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Safe area utility classes for notched phones */

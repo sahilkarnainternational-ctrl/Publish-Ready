@@ -11,6 +11,7 @@ import { User as LucideUser, Volume2, Shield, Radio, Activity, Terminal, Brain, 
 import { voiceService } from './services/voice';
 import { useUser } from './context/UserContext';
 import { load3D as engineLoad3D } from './engine3d';
+import MobileDialogWrapper from './components/MobileDialogWrapper';
 
 const Chatbot = lazy(() => import('./components/Chatbot').then((mod) => ({ default: mod.Chatbot })));
 const QuizSection = lazy(() => import('./components/QuizSection').then((mod) => ({ default: mod.QuizSection })));
@@ -32,6 +33,7 @@ const ScrollExpansionHero = lazy(() => import('./components/ScrollExpansionHero'
 const OriginDialog = lazy(() => import('./components/OriginDialog').then((mod) => ({ default: mod.OriginDialog })));
 const ChapterReader = lazy(() => import('./components/ChapterReader').then((mod) => ({ default: mod.ChapterReader })));
 const TopicGrid = lazy(() => import('./components/TopicGrid').then((mod) => ({ default: mod.TopicGrid })));
+const MobileBottomBar = lazy(() => import('./components/MobileBottomBar').then((mod) => ({ default: mod.MobileBottomBar })));
 
 
 export default function App() {
@@ -168,10 +170,12 @@ export default function App() {
   }, []);
 
   const openReader = useCallback((topic: string, context = '') => {
+    const searchTerm = topic?.trim();
+    if (!searchTerm) return;
     setIsChatOpen(false);
     setIsAstraVoiceOpen(false);
     setIsAITutorOpen(false);
-    setReaderTopic(topic);
+    setReaderTopic(searchTerm);
     setReaderContext(context);
     setReaderOpen(true);
   }, []);
@@ -319,8 +323,9 @@ export default function App() {
                   <i className="fas fa-search text-[var(--accent)] hidden sm:block mr-4" />
                   <input 
                     type="text" 
-                    id="hero-search-input" 
-                    className="flex-1 bg-transparent border-none text-white outline-none py-3 px-4 sm:p-0 text-center sm:text-left"
+                    id="hero-search-input"
+                    aria-label="Search chapters, formulas, or videos"
+                    className="flex-1 bg-transparent border-none text-white outline-none py-3 px-4 sm:p-0 text-left"
                     placeholder="Search chapters, formulas, or cancer study videos..." 
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') openReader((e.target as HTMLInputElement).value);
@@ -330,8 +335,10 @@ export default function App() {
                     className="rainbow-btn w-full sm:w-auto mt-2 sm:mt-0"
                     onClick={() => {
                       const input = document.getElementById('hero-search-input') as HTMLInputElement;
-                      openReader(input.value);
-                      voiceService.speak(`Initializing search for ${input.value}. Accessing global pathology index.`);
+                      const value = input?.value?.trim() || '';
+                      if (!value) return;
+                      openReader(value);
+                      voiceService.speak(`Initializing search for ${value}. Accessing global pathology index.`);
                     }}
                   >
                     <span>Initialize Search</span>
@@ -724,6 +731,22 @@ export default function App() {
       <Suspense fallback={<div className="rounded-[32px] bg-black/10 h-[20rem] animate-pulse mx-auto max-w-7xl mb-24" />}>
         <FeedbackSection />
       </Suspense>
+      <Suspense fallback={<div className="md:hidden" />}>
+        <MobileBottomBar
+          onOpenVoice={openAstraVoice}
+          onOpenTutor={openAITutor}
+          onOpenProfile={openProfile}
+          onOpenMenu={() => {
+            const btn = document.querySelector('button[aria-label="Open menu"]');
+            // if MobileNav exposes a menu toggle button, prioritize it
+            if (btn) (btn as HTMLButtonElement).click();
+          }}
+          onOpenSearch={() => {
+            const el = document.getElementById('hero-search-input') as HTMLInputElement | null;
+            el?.focus();
+          }}
+        />
+      </Suspense>
 
       {/* PARENT REPORT SECTION */}
       <Suspense fallback={<div className="rounded-[32px] bg-black/10 h-[20rem] animate-pulse mx-auto max-w-7xl mb-24" />}>
@@ -845,13 +868,15 @@ export default function App() {
         <AstraVoice isOpen={isAstraVoiceOpen} onClose={() => setIsAstraVoiceOpen(false)} />
       </Suspense>
       <Suspense fallback={<div className="hidden" />}>
-        <Chatbot 
-          onStateChange={handleChatStateChange} 
-          externalOpen={isChatOpen}
-          hideToggle={isAITutorOpen || isAstraVoiceOpen}
-          onOpenAITutor={openAITutor}
-          onOpenVoice={openAstraVoice}
-        />
+        <MobileDialogWrapper isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} maxWidth="max-w-6xl">
+          <Chatbot 
+            onStateChange={handleChatStateChange} 
+            externalOpen={isChatOpen}
+            hideToggle={isAITutorOpen || isAstraVoiceOpen}
+            onOpenAITutor={openAITutor}
+            onOpenVoice={openAstraVoice}
+          />
+        </MobileDialogWrapper>
       </Suspense>
       <Profile isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
       <Suspense fallback={<div className="hidden" />}>

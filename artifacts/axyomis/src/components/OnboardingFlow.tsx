@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
+import MobileDialogWrapper from './MobileDialogWrapper';
 import {
   ChevronRight, ChevronLeft, GraduationCap, BookOpen, Atom, FlaskConical, Dna, Telescope,
   Brain, Calculator, Check, User, Mail, MessageCircle, Sparkles, Phone, Calendar,
@@ -100,22 +101,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ isOpen, onClose 
 
   if (!isOpen) return null;
 
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[1205] flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/85 backdrop-blur-md"
-        />
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0, y: 24 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.9, opacity: 0, y: 24 }}
-          transition={{ type: 'spring', stiffness: 280, damping: 26 }}
-          className="relative w-full max-w-2xl bg-[#08090e] border border-white/10 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
-        >
+    return (
+      <MobileDialogWrapper isOpen={isOpen} onClose={onClose}>
+        <div className="relative w-full max-w-2xl bg-[#08090e] border border-white/10 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
           {/* ambient glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-32 bg-cyan-500/8 blur-[70px] rounded-full pointer-events-none" />
 
@@ -400,8 +388,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ isOpen, onClose 
               </button>
             )}
           </div>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+        </div>
+    </MobileDialogWrapper>
   );
 };

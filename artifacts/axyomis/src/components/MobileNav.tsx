@@ -22,6 +22,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
   isPremium,
 }) => {
   const [open, setOpen] = useState(false);
+  const [fromBottom, setFromBottom] = useState(false);
 
   const action = (fn: () => void) => {
     setOpen(false);
@@ -35,6 +36,14 @@ export const MobileNav: React.FC<MobileNavProps> = ({
       document.body.style.overflow = '';
     };
   }, [open]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const check = () => setFromBottom(window.innerWidth <= 420);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   return (
     <>
@@ -58,14 +67,18 @@ export const MobileNav: React.FC<MobileNavProps> = ({
               onClick={() => setOpen(false)}
             />
             <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
+              initial={fromBottom ? { y: '100%' } : { x: '100%' }}
+              animate={fromBottom ? { y: 0 } : { x: 0 }}
+              exit={fromBottom ? { y: '100%' } : { x: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 280 }}
               role="dialog"
               aria-modal="true"
-              className="fixed inset-y-0 right-0 z-[1101] w-full max-w-[min(420px,92vw)] min-h-screen bg-[#08090e] border-l border-white/10 flex flex-col md:hidden"
-              style={{ paddingTop: 'max(22px, env(safe-area-inset-top))', paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
+              className={
+                fromBottom
+                  ? 'fixed left-0 right-0 bottom-0 z-[1101] w-full max-h-[92vh] bg-[#08090e] border-t border-white/10 flex flex-col md:hidden mobile-bottom-sheet'
+                  : 'fixed inset-y-0 right-0 z-[1101] w-full max-w-[min(420px,92vw)] min-h-screen bg-[#08090e] border-l border-white/10 flex flex-col md:hidden'
+              }
+              style={fromBottom ? { paddingTop: 'max(12px, env(safe-area-inset-top))', paddingBottom: 'max(18px, env(safe-area-inset-bottom))' } : { paddingTop: 'max(22px, env(safe-area-inset-top))', paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Menu</span>

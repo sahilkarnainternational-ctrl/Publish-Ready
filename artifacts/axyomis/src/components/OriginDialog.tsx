@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 
@@ -17,10 +17,28 @@ export const OriginDialog: React.FC<OriginDialogProps> = ({
   children,
   footerActions
 }) => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
+  }, [isOpen, onClose]);
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[1205] flex items-center justify-center p-4">
+        <div className={`fixed inset-0 z-[1205] flex ${isMobile ? 'items-end' : 'items-center'} justify-center p-4`}> 
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -33,7 +51,10 @@ export const OriginDialog: React.FC<OriginDialogProps> = ({
             initial={{ scale: 0.95, opacity: 0, y: 10 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 10 }}
-            className="relative w-full max-w-lg bg-[#0c0c0e] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            className={`relative w-full ${isMobile ? 'max-w-none rounded-t-3xl' : 'max-w-lg rounded-3xl'} bg-[#0c0c0e] border border-white/10 shadow-2xl overflow-hidden flex flex-col ${isMobile ? 'max-h-[92vh]' : 'max-h-[85vh]'}`}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
           >
             {/* Header - Sticky */}
             <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-black/20">
