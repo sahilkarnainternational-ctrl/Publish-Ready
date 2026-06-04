@@ -57,5 +57,5 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(fetch(event.request).catch(() => {}));
+  event.respondWith(fetch(event.request).catch(() => new Response(JSON.stringify({ error: 'network' }), { headers: { 'Content-Type': 'application/json' }, status: 502 })));
 });

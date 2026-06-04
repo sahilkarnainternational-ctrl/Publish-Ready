@@ -86,7 +86,7 @@ export function useCurrency() {
       } catch { /* ignore */ }
     }
     const controller = new AbortController();
-    fetch('https://ipapi.co/json/', { signal: controller.signal })
+    fetch('/api/ipinfo', { signal: controller.signal })
       .then(r => r.ok ? r.json() : null)
       .then((data) => {
         if (!data) return;
