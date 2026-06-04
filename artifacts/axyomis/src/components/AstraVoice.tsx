@@ -160,14 +160,7 @@ export const AstraVoice: React.FC<AstraVoiceProps> = ({ isOpen, onClose }) => {
               <X className="w-4 h-4" />
               <span className="text-[11px] font-black uppercase tracking-[0.25em]">Close</span>
             </button>
-            <button
-              onClick={handleClose}
-              className="astro-terminate-btn touch-target inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-violet-500 text-white shadow-[0_10px_30px_rgba(59,130,246,0.25)] transition-all hover:brightness-110"
-              aria-label="Terminate voice session and close Astra Voice"
-            >
-              <X className="w-4 h-4" />
-              <span className="text-[11px] font-black uppercase tracking-[0.25em]">Terminate</span>
-            </button>
+            {/* Terminate action intentionally omitted here to avoid duplicate controls; use the Close button above */}
           </div>
         </div>
 

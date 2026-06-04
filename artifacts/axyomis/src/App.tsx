@@ -43,32 +43,56 @@ const SplineViewer: React.FC<{ url: string }> = ({ url }) => {
     if (typeof window === 'undefined') return;
     const node = wrapperRef.current;
     if (!node) return;
-
-    const measure = () => {
+    // Wait for a positive size AND for the element to become visible in the viewport
+    const measureSize = () => {
       const width = node.offsetWidth;
       const height = node.offsetHeight;
-      const valid = width > 0 && height > 0;
-      setReady(valid);
-      return valid;
+      return width > 0 && height > 0;
     };
 
-    if (measure()) return;
+    if (measureSize()) {
+      setReady(true);
+      return;
+    }
 
-    const handleResize = () => measure();
-    const observer = new ResizeObserver(() => {
-      if (measure()) {
-        observer.disconnect();
+    const resizeObserver = new ResizeObserver(() => {
+      if (measureSize()) {
+        setReady(true);
+        resizeObserver.disconnect();
+        if (intersectionObserver) intersectionObserver.disconnect();
       }
     });
-    observer.observe(node);
+    resizeObserver.observe(node);
+
+    let intersectionObserver: IntersectionObserver | null = null;
+    try {
+      intersectionObserver = new IntersectionObserver((entries) => {
+        const entry = entries[0];
+        if (entry && entry.isIntersecting && measureSize()) {
+          setReady(true);
+          resizeObserver.disconnect();
+          intersectionObserver?.disconnect();
+        }
+      }, { threshold: 0.01 });
+      intersectionObserver.observe(node);
+    } catch (e) {
+      // If IntersectionObserver isn't supported, fallback to resize-only logic
+    }
+
+    const handleResize = () => {
+      if (measureSize()) {
+        setReady(true);
+      }
+    };
     window.addEventListener('resize', handleResize);
 
     const timeout = window.setTimeout(() => {
-      measure();
+      if (measureSize()) setReady(true);
     }, 1500);
 
     return () => {
-      observer.disconnect();
+      resizeObserver.disconnect();
+      if (intersectionObserver) intersectionObserver.disconnect();
       window.removeEventListener('resize', handleResize);
       window.clearTimeout(timeout);
     };
@@ -435,7 +459,15 @@ export default function App() {
             <div className="glass-card w-full max-w-[min(420px,100%)] min-h-[20rem] sm:min-h-[25rem] bg-[var(--glass-bg)] rounded-[30px] border border-[var(--glass-border)] backdrop-blur-3xl shadow-2xl overflow-hidden relative group-hover/spline:shadow-[0_0_80px_rgba(34,211,238,0.2)] group-hover/spline:border-[var(--accent)]/50 transition-all duration-500">
               <div className="absolute top-4 right-4 z-20 sm:hidden">
                 <button
-                  onClick={() => setShowMobilePreview(prev => !prev)}
+                  onClick={() => setShowMobilePreview(prev => {
+                    const next = !prev;
+                    try {
+                      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                        setIsMobileNavOpen(false);
+                      }
+                    } catch (e) {}
+                    return next;
+                  })}
                   aria-label={showMobilePreview ? 'Hide mobile preview' : 'Show mobile preview'}
                   className="inline-flex items-center justify-center rounded-full bg-slate-950/80 border border-white/10 p-2 text-slate-200 shadow-lg shadow-black/40 transition hover:bg-slate-900"
                 >

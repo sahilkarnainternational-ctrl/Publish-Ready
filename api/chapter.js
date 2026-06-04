@@ -87,8 +87,36 @@ export default async function handler(req, res) {
     }
 
     const apiKey = cleanApiKey(process.env.GROQ_API_KEY);
+    // If the GROQ API key is not present, gracefully fall back to a Wikipedia-derived
+    // chapter so the app still works in local/dev environments instead of returning 500.
     if (!apiKey) {
-      res.status(500).json({ error: 'GROQ_API_KEY not configured' });
+      console.warn('GROQ_API_KEY not configured — falling back to Wikipedia content');
+      const wikiFallback = await fetchWikiText(topic.trim());
+      const profile = classProfile(classLevel);
+      const chapter = {
+        title: wikiFallback.title || topic.trim(),
+        introduction: wikiFallback.extract.slice(0, 800) || '',
+        context: '',
+        explanation: wikiFallback.extract.slice(800, 3000) || wikiFallback.extract || '',
+        formulas: '',
+        examples: '',
+        diagramMermaid: '',
+        summary: ['Review the core concepts', 'Practice with related quizzes', 'Explore linked topics'],
+        conclusion: 'Keep exploring this topic with videos and quizzes in Axyomis-X.',
+        relatedTopics: [],
+      };
+
+      res.status(200).json({
+        ...chapter,
+        title: chapter.title,
+        subject,
+        classLevel,
+        topic: topic.trim(),
+        curriculum: curriculum || 'International',
+        country,
+        wikiUrl: `https://en.wikipedia.org/wiki/${encodeURIComponent(wikiFallback.title.replace(/ /g, '_'))}`,
+        generatedAt: new Date().toISOString(),
+      });
       return;
     }
 

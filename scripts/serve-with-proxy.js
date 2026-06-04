@@ -12,9 +12,9 @@ app.use('/api', createProxyMiddleware({
   changeOrigin: true, 
   logLevel: 'info',
   pathRewrite: (path, req) => {
-    // Express mounts this middleware at /api and strips the prefix before forwarding.
-    // Re-prepend /api so the backend (which mounts router at /api) receives /api/* paths.
-    return '/api' + path;
+    // Forward the path to the API server without duplicating the /api prefix.
+    // Example: incoming /api/chapter -> forwarded /api/chapter (no double /api)
+    return path.replace(/^\/api/, '/api');
   }
 }));
 

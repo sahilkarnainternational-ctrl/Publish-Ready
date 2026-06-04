@@ -15,7 +15,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoId, title = 'Embe
         title={title}
         src={src}
         className="absolute inset-0 w-full h-full border-0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         allowFullScreen
         loading="lazy"
       />
