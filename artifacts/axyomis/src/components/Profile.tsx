@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
+import MobileDialogWrapper from './MobileDialogWrapper';
 import { User, LogOut, X, Camera, Save, Loader2, Mail, Fingerprint, ShieldCheck } from 'lucide-react';
 import { auth, getUserProfile, updateUserProfile, UserProfile, logout } from '../services/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
@@ -84,24 +85,11 @@ export const Profile: React.FC<ProfileProps> = ({ isOpen, onClose }) => {
     return () => unsubscribe();
   }, []);
 
+  if (!isOpen) return null;
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[1205] flex items-center justify-center p-4">
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-md"
-          />
-          
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className={`relative w-full ${!user ? 'max-w-md' : 'max-w-2xl'} bg-[#0d0d10] border border-white/10 rounded-[32px] shadow-2xl overflow-hidden`}
-          >
+    <MobileDialogWrapper isOpen={isOpen} onClose={onClose} maxWidth={user ? 'max-w-2xl' : 'max-w-md'}>
+      <div className={`relative w-full ${!user ? 'max-w-md' : 'max-w-2xl'} bg-[#0d0d10] border border-white/10 rounded-[32px] shadow-2xl overflow-hidden`}>
             {/* Header */}
             <div className={`p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-blue-500/5 to-transparent ${!user ? 'hidden' : ''}`}>
               <div className="flex items-center gap-4">
@@ -304,9 +292,7 @@ export const Profile: React.FC<ProfileProps> = ({ isOpen, onClose }) => {
                 )}
               </div>
             )}
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+      </div>
+    </MobileDialogWrapper>
   );
 };

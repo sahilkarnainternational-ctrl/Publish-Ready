@@ -22,6 +22,20 @@
   --tr: all 0.4s cubic-bezier(0.2, 1, 0.3, 1);
 }
 
+/* Mobile design tokens & safe-area helpers */
+@media (max-width: 768px) {
+  :root {
+    --mobile-gap: 0.75rem;
+    --mobile-touch: 56px;
+    --hero-cta-gap: 0.75rem;
+  }
+}
+
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 1rem); }
+
+
 @layer base {
   * { margin:0; padding:0; box-sizing:border-box; word-break: break-word; }
   
@@ -90,7 +104,14 @@
     min-height: 100svh;
     min-width: 100%;
     width: 100%;
-    overflow-x: hidden;
+    .ambient-glow {
+      width: 100%;
+    }
+    .hero-cta-stack {
+      display: flex;
+      flex-direction: column;
+      gap: var(--hero-cta-gap);
+    }
   }
 
   .touch-target {
