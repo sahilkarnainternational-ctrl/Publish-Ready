@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu, X, Brain, Volume2, User as UserIcon, GraduationCap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -28,6 +28,14 @@ export const MobileNav: React.FC<MobileNavProps> = ({
     fn();
   };
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
   return (
     <>
       <button
@@ -53,7 +61,9 @@ export const MobileNav: React.FC<MobileNavProps> = ({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-              className="fixed top-0 right-0 bottom-0 z-[1101] w-[min(320px,88vw)] bg-[#08090e] border-l border-white/10 flex flex-col md:hidden"
+              role="dialog"
+              aria-modal="true"
+              className="fixed inset-y-0 right-0 z-[1101] w-full max-w-[min(420px,88vw)] bg-[#08090e] border-l border-white/10 flex flex-col md:hidden"
               style={{ paddingTop: 'max(16px, env(safe-area-inset-top))', paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">

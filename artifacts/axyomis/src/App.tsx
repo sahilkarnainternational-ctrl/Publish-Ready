@@ -298,8 +298,8 @@ export default function App() {
 
       <main id="app" className="pt-32">
         {/* HERO SECTION */}
-        <section className="flex flex-col lg:flex-row items-center justify-between min-h-[80vh] max-w-7xl mx-auto px-4 sm:px-8 gap-12 relative">
-          <div id="glow" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw] h-[40vw] bg-[rgba(229,211,179,0.12)] blur-[120px] rounded-full pointer-events-none z-0"></div>
+        <section className="flex flex-col lg:flex-row items-center justify-between min-h-[calc(100vh-6rem)] lg:min-h-[80vh] max-w-7xl mx-auto px-4 sm:px-8 gap-8 relative">
+          <div id="glow" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(40vw,28rem)] h-[min(40vw,28rem)] bg-[rgba(229,211,179,0.12)] blur-[120px] rounded-full pointer-events-none z-0"></div>
           
           <div className="flex-1 w-full z-10 mt-10 lg:mt-0">
             <div className="cyber-greeting-box bg-[#0d0d10a6] border border-white/10 rounded-[48px] p-8 sm:p-16 backdrop-blur-3xl shadow-2xl">
@@ -361,8 +361,9 @@ export default function App() {
             </div>
           </div>
 
-          <div id="card" className="flex-1 relative flex justify-center items-center h-[400px] sm:h-[550px] w-full z-10 transition-all duration-500 ease-out hover:scale-105 hover:rotate-1 group/spline">
-            <div className="glass-card w-full max-w-[450px] h-full bg-[var(--glass-bg)] rounded-[30px] border border-[var(--glass-border)] backdrop-blur-3xl shadow-2xl overflow-hidden relative group-hover/spline:shadow-[0_0_80px_rgba(34,211,238,0.2)] group-hover/spline:border-[var(--accent)]/50 transition-all duration-500">
+          <div id="card" className="flex-1 relative flex justify-center items-center min-h-[28rem] sm:min-h-[34rem] w-full z-10 transition-all duration-500 ease-out group/spline">
+            <div className="glass-card w-full max-w-[450px] min-h-[28rem] bg-[var(--glass-bg)] rounded-[30px] border border-[var(--glass-border)] backdrop-blur-3xl shadow-2xl overflow-hidden relative group-hover/spline:shadow-[0_0_80px_rgba(34,211,238,0.2)] group-hover/spline:border-[var(--accent)]/50 transition-all duration-500">
+              {/* @ts-ignore */}
               <spline-viewer url="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"></spline-viewer>
               <div className="absolute bottom-8 left-8 right-8 pointer-events-none group-hover/spline:translate-y-[-4px] transition-transform duration-500">
                 <h1 className="text-white text-3xl font-bold tracking-widest uppercase mb-1 font-['Rajdhani']">Lyra AI</h1>

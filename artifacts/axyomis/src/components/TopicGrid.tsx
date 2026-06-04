@@ -169,7 +169,7 @@ export const TopicGrid: React.FC<TopicGridProps> = ({ category, context, onOpenR
           )}
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
         {visibleCards.map((card, i) => (
           <motion.button
             key={card.title}
@@ -179,7 +179,7 @@ export const TopicGrid: React.FC<TopicGridProps> = ({ category, context, onOpenR
             onClick={() => onOpenReader(card.title, context || category)}
             className="group text-left rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:border-blue-500/30 hover:bg-white/[0.03] transition-all duration-300 overflow-hidden flex flex-col"
           >
-            <div className="relative h-48 overflow-hidden bg-black">
+            <div className="relative aspect-[4/3] overflow-hidden bg-black">
               {card.imgSrc ? (
                 <img
                   src={card.imgSrc}
